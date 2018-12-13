@@ -118,12 +118,12 @@ def generate_grid_from_flow_dir(rs):
     return data_dict
 
 
-def parse_runoff_data(runoff_data_path, data_dict):
+def parse_runoff_data(runoff_data_path, data_dict, use_cache):
     """Parse the runoff data given the path to the runoff data."""
     runoff_file_last_modified = os.path.getmtime(runoff_data_path)
     cache_file = 'cache/{0}_runoff.json'.format(runoff_file_last_modified)
 
-    if os.path.isfile(cache_file):
+    if os.path.isfile(cache_file) and use_cache:
         with open(cache_file, 'r') as cache:
             data_dict = json.load(cache)
         print("\t...retrieving from cache ({0})".format(cache_file))

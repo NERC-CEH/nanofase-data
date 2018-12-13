@@ -28,7 +28,7 @@ print('Generating grid structure and linking grid cells/river reaches...')
 data_dict = du.generate_grid_from_flow_dir(rs)
 
 print('Parsing runoff data...')
-data_dict = du.parse_runoff_data(config['runoff'], data_dict)
+data_dict = du.parse_runoff_data(config['runoff'], data_dict, config['use_cache'])
 
 print('Parsing atmospheric data...')
 data_dict = du.parse_atmospheric_data(config['atmospheric_dry_depo_dir'], config['atmospheric_wet_depo_dir'], data_dict, config['timesteps'])
