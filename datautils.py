@@ -350,3 +350,31 @@ def parse_precipitation_data(precipitation_dir, data_dict, timesteps):
                 data_dict[grid_cell_ref]['precip[t]'].append(arr[row, col].item() / (1000 * 86400))  # Converted to m/s from mm/day
 
     return data_dict
+
+
+def parse_tidal_bounds(tidal_bounds, data_dict):
+    # Open the raster file that defines the extent of the estuary. Any grid cell that has a
+    # value in this raster will be defined as having an EstuaryReach
+    rs = rasterio.open(tidal_bounds)
+    # Loop through the grid cells and check if they should be estuarine
+    for grid_cell_ref, grid_cell in data_dict.items():
+        if grid_cell_ref != 'grid_dimensions[d]':
+            x_grid = grid_cell['x_coord_c']
+            y_grid = grid_cell['y_coord_c']
+            row, col = rs.index(x_grid, y_grid)
+            arr = rs.read(1)
+            # If this is an estuary
+            if arr[row, col].item() > 0:
+                temp_grid_cell_dict = data_dict[grid_cell_ref]
+                for k, v in temp_grid_cell_dict.items():
+                    if 'RiverReach' in k:
+                        # Create new dict for the estuary, and fill with the existing river dict's values
+                        temp_grid_cell_dict[k.replace('River', 'Estuary')] = v
+                        # Remove the river dict
+                        del temp_grid_cell_dict[k]
+                # Change n_river_reaches to n_estuary_reaches
+                temp_grid_cell_dict['n_estuary_reaches'] = temp_grid_cell_dict.pop('n_river_reaches')
+                # Apply these changes to the master dict
+                data_dict[grid_cell_ref] = temp_grid_cell_dict
+
+    return data_dict

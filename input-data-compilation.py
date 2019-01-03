@@ -65,6 +65,10 @@ data_dict = du.parse_pfactor_data(config['p-factor'], data_dict)
 print('Parsing precipitation data...')
 data_dict = du.parse_precipitation_data(config['precipitation_dir'], data_dict, config['timesteps'])
 
+# Converting RiverReaches to EstuaryReaches, where applicable
+print('Setting tidal bounds...')
+data_dict = du.parse_tidal_bounds(config['tidal_bounds'], data_dict)
+
 # Filling in the gaps
 print('Filling the gaps...')
 data_dict["dimensions"] = { "d": 2, "state": 7, "form": 4, "n": 5 }
@@ -99,14 +103,26 @@ for grid_cell_ref, grid_cell in data_dict.items():
         })
         data_dict[grid_cell_ref]["demands"] = "file::demands-example.json"
         data_dict[grid_cell_ref]["reach_types[r]"] = [1]
-        for i in range(1,data_dict[grid_cell_ref]["n_river_reaches"] + 1):
-            reach_ref = "RiverReach_{0}_{1}_{2}".format(x,y,i)
-            data_dict[grid_cell_ref][reach_ref]["BedSediment"] = "file::bed-sediment-compact.json"
-            data_dict[grid_cell_ref][reach_ref]["beta_res"] = 0.000001
-            data_dict[grid_cell_ref][reach_ref]["alpha_res"] = 0.001
-            data_dict[grid_cell_ref][reach_ref]["slope"] = 0.0005
-            if "inflows[in][river_reach_ref]" in data_dict[grid_cell_ref][reach_ref]:
-                data_dict[grid_cell_ref][reach_ref]["dimensions"] = { "in": len(grid_cell[reach_ref]['inflows[in][river_reach_ref]']) }
+        # RiverReach sediment
+        if "n_river_reaches" in data_dict[grid_cell_ref]:
+            for i in range(1,data_dict[grid_cell_ref]["n_river_reaches"] + 1):
+                reach_ref = "RiverReach_{0}_{1}_{2}".format(x,y,i)
+                data_dict[grid_cell_ref][reach_ref]["BedSediment"] = "file::bed-sediment-compact.json"
+                data_dict[grid_cell_ref][reach_ref]["beta_res"] = 0.000001
+                data_dict[grid_cell_ref][reach_ref]["alpha_res"] = 0.001
+                data_dict[grid_cell_ref][reach_ref]["slope"] = 0.0005
+                if "inflows[in][river_reach_ref]" in data_dict[grid_cell_ref][reach_ref]:
+                    data_dict[grid_cell_ref][reach_ref]["dimensions"] = { "in": len(grid_cell[reach_ref]['inflows[in][river_reach_ref]']) }
+        # EstuaryReach sediment
+        if "n_estuary_reaches" in data_dict[grid_cell_ref]:
+            for i in range(1,data_dict[grid_cell_ref]["n_estuary_reaches"] + 1):
+                reach_ref = "EstuaryReach_{0}_{1}_{2}".format(x,y,i)
+                data_dict[grid_cell_ref][reach_ref]["BedSediment"] = "file::bed-sediment-compact.json"
+                data_dict[grid_cell_ref][reach_ref]["beta_res"] = 0.000001
+                data_dict[grid_cell_ref][reach_ref]["alpha_res"] = 0.001
+                data_dict[grid_cell_ref][reach_ref]["slope"] = 0.0005
+                if "inflows[in][river_reach_ref]" in data_dict[grid_cell_ref][reach_ref]:
+                    data_dict[grid_cell_ref][reach_ref]["dimensions"] = { "in": len(grid_cell[reach_ref]['inflows[in][river_reach_ref]']) }
         # Remove some stuff
         if 'inflows' in data_dict[grid_cell_ref]: 
             del data_dict[grid_cell_ref]['inflows']

@@ -15,4 +15,5 @@ Config options:
 - `bulk_density`: Path to bulk density raster. Must be in ESPG:27700 projection (OSGB) and be a valid raster file, openable by Rasterio.
 - `c-factor`, `ls-factor` and `p-factor`: Path to the RUSLE C-factor, LS-factor and P-factor rasters. Must be in ESPG:27700 projection (OSGB) and be a valid raster file, openable by Rasterio.
 - `precipitation_dir`: Directory to the precipitation data. Data should be one file per time step and have the file name `Lrainfall_5km_2015-{t}.tif`, where `{t}` is the time step number. Must be in ESPG:27700 projection (OSGB).
+- `tidal_bounds`: Path to a raster file that defines the bounds of the estuary. Every raster pixel (grid cell) that has a value will be assumed to have only estuarine waterbodies.
 - `output_file`: Where should the final JSON file be placed?

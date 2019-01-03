@@ -10,4 +10,5 @@ c-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/c-fac
 ls-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/ls-factor_osgb_5000m.tif
 p-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/p-factor_osgb_5000m.tif
 precipitation_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/rainfall/
+tidal_bounds: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/is-river-an-estuary.tif
 output_file: data.json
