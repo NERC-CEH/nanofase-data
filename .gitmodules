@@ -1,0 +1,3 @@
+[submodule "vendor/json2netcdf"]
+	path = vendor/json2netcdf
+	url = https://github.com/samharrison7/json2netcdf

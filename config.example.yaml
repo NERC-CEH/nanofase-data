@@ -1,0 +1,14 @@
+timesteps: 365
+flow_dir_raster: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/flowdir_05000_thames.tif
+runoff: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/hydro/qf_sf.csv
+atmospheric_dry_depo_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/atmospheric/drydepo_np_2015/
+atmospheric_wet_depo_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/atmospheric/wetdepo_np_2015/
+sources: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/NanoFASE_TiO2_emissions_to_surface_water_v0_1_20180712.txt
+soil_texture_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/
+bulk_density: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
+c-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/c-factor_osgb_5000m_qgis.tif
+ls-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/ls-factor_osgb_5000m.tif
+p-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/p-factor_osgb_5000m.tif
+precipitation_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/rainfall/
+tidal_bounds: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/is-river-an-estuary.tif
+output_file: data.json
