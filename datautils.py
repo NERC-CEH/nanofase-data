@@ -417,4 +417,3 @@ def parse_tidal_bounds(tidal_bounds, data_dict):
                 data_dict[grid_cell_ref] = temp_grid_cell_dict
 
     return data_dict
-
