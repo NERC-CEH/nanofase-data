@@ -55,11 +55,39 @@ def route_reaches(seeds, data_dict):
         stream_order = data_dict[cell_ref][reach_ref]['stream_order']
         if 'outflow[river_reach_ref]' in data_dict[cell_ref][reach_ref]:
             outflow = data_dict[cell_ref][reach_ref]['outflow[river_reach_ref]']
+            # Store the "old" cell and reach refs for use in checking whether all reaches computed below
+            old_cell_ref = cell_ref
+            old_reach_ref = reach_ref
+            old_reach = data_dict[cell_ref][reach_ref]
+            # Set the "new" next cell and reach refs
             next_cell_ref = 'GridCell_{0}_{1}'.format(outflow[0], outflow[1])
             next_reach_ref = get_reach_ref(next_cell_ref, data_dict[next_cell_ref], outflow[2])
             next_reach = data_dict[next_cell_ref][next_reach_ref]
             # If the next reach has 1 inflow, then we've not gone past a junction
             go_to_next_reach = 'inflows[in][river_reach_ref]' in next_reach and len(next_reach['inflows[in][river_reach_ref]']) == 1
+            if not go_to_next_reach:
+                # Now we need to check whether we've computed all the inflows for this reach yet,
+                # by checking whether the stream order property has been set and if it is
+                # equal to this stream order
+                all_reaches_computed = True
+                next_stream_order = 0
+                for i in range(1, data_dict[old_cell_ref]['n_river_reaches'] + 1):
+                    reach_ref = get_reach_ref(old_cell_ref, data_dict[old_cell_ref], i)
+                    if 'stream_order' not in data_dict[old_cell_ref][reach_ref] or data_dict[old_cell_ref][reach_ref]['stream_order'] > stream_order:
+                        all_reaches_computed = False
+                    else:
+                        x_old_reach_outflow = data_dict[old_cell_ref][reach_ref]['outflow[river_reach_ref]'][0]
+                        y_old_reach_outflow = data_dict[old_cell_ref][reach_ref]['outflow[river_reach_ref]'][1]
+                        r_old_reach_outflow = data_dict[old_cell_ref][reach_ref]['outflow[river_reach_ref]'][2]
+                        x = int(next_reach_ref.split('_')[1])
+                        y = int(next_reach_ref.split('_')[2])
+                        r = int(next_reach_ref.split('_')[3])
+                        if ([x_old_reach_outflow, y_old_reach_outflow, r_old_reach_outflow] == [x, y, r]):
+                            next_stream_order = next_stream_order + data_dict[old_cell_ref][reach_ref]['stream_order']
+                # Only add this to the next seed if all reaches computed
+                if all_reaches_computed:
+                    data_dict[next_cell_ref][next_reach_ref]['stream_order'] = next_stream_order
+                    next_seeds.append(next_reach_ref)
             # Loop until we hit a junction
             while go_to_next_reach:
                 data_dict[next_cell_ref][next_reach_ref]['stream_order'] = stream_order
