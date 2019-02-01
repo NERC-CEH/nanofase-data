@@ -93,9 +93,9 @@ data_dict = du.parse_tidal_bounds(config['tidal_bounds'], data_dict)
 
 # Filling in the gaps
 print('Filling the gaps...')
-data_dict["dimensions"] = { "d": 2, "state": 7, "form": 4, "n": 5 }
+data_dict["dimensions"].update({ "d": 2, "state": 7, "form": 4, "n": 5 })
 for grid_cell_ref, grid_cell in data_dict.items():
-    if grid_cell_ref not in ["dimensions", "grid_dimensions[d]"]:
+    if grid_cell_ref not in ["dimensions", "grid_dimensions[d]", "routed_reaches[branches][seeds][river_reach_ref]"]:
         x = grid_cell['x']
         y = grid_cell['y']
         data_dict[grid_cell_ref]["dimensions"] = { "r": 1 }
