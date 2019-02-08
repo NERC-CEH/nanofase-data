@@ -4,6 +4,7 @@ from datetime import date
 from datetime import timedelta
 import rasterio
 import numpy as np
+import math
 import os
 import json
 from vendor.osgb36_to_wgs84 import OSGB36toWGS84
@@ -163,7 +164,7 @@ def generate_grid_from_flow_dir(rs):
                 
     # Set the the inflow for each cell, based on the cell outflows. At the
     # end of this, each cell will have the number of outflows equal to the
-    # number of river reaches that should be in that cell
+    # number of river reaches that should be in that cell.
     for ref, cell in data_dict.items():
         x = cell['x']
         y = cell['y']
@@ -562,6 +563,16 @@ def parse_tidal_bounds(tidal_bounds, data_dict):
                         del temp_grid_cell_dict[k]
                 # Change n_river_reaches to n_estuary_reaches
                 temp_grid_cell_dict['n_estuary_reaches'] = temp_grid_cell_dict.pop('n_river_reaches')
+
+                # HACK set the distance to mouth
+                dx = 585000 - temp_grid_cell_dict['x_coord_c']
+                dy = 180000 - temp_grid_cell_dict['y_coord_c']
+                distance_to_mouth = math.sqrt(dx**2 + dy**2)*1.4
+                x_grid = grid_cell_ref.split('_')[1]
+                y_grid = grid_cell_ref.split('_')[2]
+                for i in range(1, temp_grid_cell_dict['n_estuary_reaches']+1):
+                    temp_grid_cell_dict['EstuaryReach_{0}_{1}_{2}'.format(x_grid, y_grid, i)]['distance_to_mouth'] = distance_to_mouth
+
                 # Apply these changes to the master dict
                 data_dict[grid_cell_ref] = temp_grid_cell_dict
 
