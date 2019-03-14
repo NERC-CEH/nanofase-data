@@ -25,6 +25,11 @@ rs = rasterio.open(config['flow_dir_raster'])
 xmin, xmax = int(rs.bounds.left), int(rs.bounds.right)
 ymin, ymax = int(rs.bounds.bottom), int(rs.bounds.top)
 
+# TODO
+#   Get (x,y) size of model domain from Rasterio vector
+#   Pass this to methods like parse_runoff_data. These then construct (x,y,val) array of data
+#   Write something to compile all of these at the end of this script
+
 print('Generating grid structure and linking grid cells/river reaches...')
 data_dict = du.generate_grid_from_flow_dir(rs)
 
@@ -34,7 +39,6 @@ datasets = []
 print('Parsing runoff data...')
 runoff_data_dict = du.parse_runoff_data(config['runoff'], data_dict)
 datasets.append(runoff_data_dict)
-
 print('Parsing atmospheric data...')
 atmospheric_data_dict = du.parse_atmospheric_data(config['atmospheric_dry_depo_dir'],
                                                   config['atmospheric_wet_depo_dir'],
@@ -44,7 +48,8 @@ datasets.append(atmospheric_data_dict)
 
 # Source data parsing is horrendously inefficient at the moment!
 print('Parsing source data...')
-source_data_dict = du.parse_source_data(config['sources'], data_dict)
+source_data_dict = du.parse_source_data_v2(config['sources'], config['sources_temp'], config['material'], data_dict)
+# data_dict = du.parse_source_data(config['sources'], data_dict)
 datasets.append(source_data_dict)
 
 # Soil texture. LUCAS interpolated by (https://esdac.jrc.ec.europa.eu/content/topsoil-physical-properties-europe-based-lucas-topsoil-data)
