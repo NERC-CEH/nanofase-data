@@ -312,7 +312,7 @@ def parse_runoff_data(runoff_data_path, data_dict):
     return data_dict
 
 
-def parse_atmospheric_data(dry_depo_dir, wet_depo_dir, data_dict, timesteps):
+def parse_atmospheric_data(dry_depo_dir, wet_depo_dir, data_dict, timesteps, material):
     # Only check the first of the drydepo files to see if it's been updated
     dry_depo_last_modified = os.path.getmtime(dry_depo_dir + "LE-Tio2-newemis-2019-zoom_drydepo_dayval_1.tif")
     cache_file = 'cache/{0}_atmospheric.json'.format(dry_depo_last_modified)
@@ -322,32 +322,40 @@ def parse_atmospheric_data(dry_depo_dir, wet_depo_dir, data_dict, timesteps):
             data_dict = json.load(cache)
         print("\t...retrieving from cache ({0})".format(cache_file))
     else:
-        for t in range(1,timesteps+1):
-            rs_dry = rasterio.open(dry_depo_dir + "LE-Tio2-newemis-2019-zoom_drydepo_dayval_" + str(t) + ".tif")
-            rs_wet = rasterio.open(wet_depo_dir + "LE-Tio2-newemis-2019-zoom_wetdepo_dayval_" + str(t) + ".tif")
-            # Loop through the dict and append this timestep's rainfall to the correct cell
+        if material == 'TiO2':
+            for t in range(1,timesteps+1):
+                rs_dry = rasterio.open(dry_depo_dir + "LE-Tio2-newemis-2019-zoom_drydepo_dayval_" + str(t) + ".tif")
+                rs_wet = rasterio.open(wet_depo_dir + "LE-Tio2-newemis-2019-zoom_wetdepo_dayval_" + str(t) + ".tif")
+                # Loop through the dict and append this timestep's rainfall to the correct cell
+                for grid_cell_ref, grid_cell in data_dict.items():
+                    if grid_cell_ref not in ['grid_dimensions[d]', 'dimensions', 'routed_reaches[branches][seeds][river_reach_ref]']:
+                        # Create the empty timeseries if this is the first timestep
+                        if t == 1:
+                            data_dict[grid_cell_ref]['DiffuseSource_1'] = {}
+                            data_dict[grid_cell_ref]['DiffuseSource_2'] = {}
+                            data_dict[grid_cell_ref]['DiffuseSource_1']['input_mass_atmospheric[n][t]'] = np.zeros((5, 365)).tolist()
+                            data_dict[grid_cell_ref]['DiffuseSource_2']['input_mass_atmospheric[n][t]'] = np.zeros((5, 365)).tolist()
+                            data_dict[grid_cell_ref]['n_diffuse_sources'] = 2
+                        x_grid = grid_cell['x_coord_c']
+                        y_grid = grid_cell['y_coord_c']
+                        dry_row, dry_col = rs_dry.index(x_grid, y_grid)
+                        wet_row, wet_col = rs_wet.index(x_grid, y_grid)
+                        dry_arr = rs_dry.read(1)
+                        wet_arr = rs_wet.read(1)
+                        dry_dep = impose_distribution(dry_arr[dry_row, dry_col].item())
+                        wet_dep = impose_distribution(wet_arr[wet_row, wet_col].item())
+                        # Add deposited mass to free, core
+                        for i in range(0,5):
+                            data_dict[grid_cell_ref]['DiffuseSource_1']['input_mass_atmospheric[n][t]'][i][t-1] = dry_dep[i]
+                            data_dict[grid_cell_ref]['DiffuseSource_2']['input_mass_atmospheric[n][t]'][i][t-1] = wet_dep[i]
+        else:
             for grid_cell_ref, grid_cell in data_dict.items():
                 if grid_cell_ref not in ['grid_dimensions[d]', 'dimensions', 'routed_reaches[branches][seeds][river_reach_ref]']:
-                    # Create the empty timeseries if this is the first timestep
-                    if t == 1:
-                        data_dict[grid_cell_ref]['DiffuseSource_1'] = {}
-                        data_dict[grid_cell_ref]['DiffuseSource_2'] = {}
-                        data_dict[grid_cell_ref]['DiffuseSource_1']['input_mass_atmospheric[n][t]'] = np.zeros((5, 365)).tolist()
-                        data_dict[grid_cell_ref]['DiffuseSource_2']['input_mass_atmospheric[n][t]'] = np.zeros((5, 365)).tolist()
-                        data_dict[grid_cell_ref]['n_diffuse_sources'] = 2
-                    x_grid = grid_cell['x_coord_c']
-                    y_grid = grid_cell['y_coord_c']
-                    dry_row, dry_col = rs_dry.index(x_grid, y_grid)
-                    wet_row, wet_col = rs_wet.index(x_grid, y_grid)
-                    dry_arr = rs_dry.read(1)
-                    wet_arr = rs_wet.read(1)
-                    dry_dep = impose_distribution(dry_arr[dry_row, dry_col].item())
-                    wet_dep = impose_distribution(wet_arr[wet_row, wet_col].item())
-                    # Add deposited mass to free, core
-                    # TODO check units
-                    for i in range(0,5):
-                        data_dict[grid_cell_ref]['DiffuseSource_1']['input_mass_atmospheric[n][t]'][i][t-1] = dry_dep[i]
-                        data_dict[grid_cell_ref]['DiffuseSource_2']['input_mass_atmospheric[n][t]'][i][t-1] = wet_dep[i]
+                    data_dict[grid_cell_ref]['DiffuseSource_1'] = {}
+                    data_dict[grid_cell_ref]['DiffuseSource_2'] = {}
+                    data_dict[grid_cell_ref]['DiffuseSource_1']['input_mass_atmospheric[n][t]'] = np.zeros((5, 365)).tolist()
+                    data_dict[grid_cell_ref]['DiffuseSource_2']['input_mass_atmospheric[n][t]'] = np.zeros((5, 365)).tolist()
+                    data_dict[grid_cell_ref]['n_diffuse_sources'] = 2
 
         with open(cache_file, 'w') as cache:
             json.dump(data_dict, cache)
@@ -464,50 +472,67 @@ def parse_source_data_v2(sources, sources_temp, material, data_dict):
                                 # If it's a point source
                                 if source['Sourcetype'] == 'P':
                                     if source['Compartment'] == 'Surface water':
-                                        print("yep")
                                         rr = 'RiverReach_{0}_{1}_1'.format(x, y) if 'RiverReach_{0}_{1}_1'.format(x, y) in data_dict[grid_cell_ref] else 'EstuaryReach_{0}_{1}_1'.format(x, y)
                                         if rr in data_dict[grid_cell_ref]:
-                                            if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
-                                                n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
-                                            else:
-                                                n_point_sources = 1
-                                            data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
-                                            ps = 'PointSource_{0}'.format(n_point_sources)
-                                            data_dict[grid_cell_ref][rr][ps] = {}
                                             if source['Application'] == 'Personal care' and material == 'TiO2':
                                                 # Always pristine
-                                                print('\t\t\t...point source with temporal profile'.format(s))
-                                                print(len(temp_profile))
+                                                print('\t\t\t...point source with temporal profile')
+                                                if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                    n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                else:
+                                                    n_point_sources = 1
+                                                ps = 'PointSource_{0}'.format(n_point_sources)
+                                                data_dict[grid_cell_ref][rr][ps] = {}
+                                                data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
                                                 np_in = [impose_distribution(t*source['Local_emission_kg']/365) for t in temp_profile]
-                                                data_dict[grid_cell_ref][rr][ps]['variable_mass[state][form][n][t]'] = np.zeros((7, 4, 5, 365)).tolist()
-                                                data_dict[grid_cell_ref][rr][ps]['variable_mass[state][form][n][t]'][0][0][:][:] = np_in
+                                                data_dict[grid_cell_ref][rr][ps]['variable_mass_pristine[n][t]'] = np_in
                                             else:
                                                 if source['Form'] == 'Pristine':
-                                                    print('\t\t\t...pristine point source to water'.format(s))
+                                                    print('\t\t\t...pristine point source to water')
+                                                    if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                        n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                    else:
+                                                        n_point_sources = 1
+                                                    ps = 'PointSource_{0}'.format(n_point_sources)
+                                                    data_dict[grid_cell_ref][rr][ps] = {}
+                                                    data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
                                                     data_dict[grid_cell_ref][rr][ps]['fixed_mass[state][form][n]'] = np.zeros((7, 4, 5)).tolist()
                                                     np_in = impose_distribution(source['Local_emission_kg']/365)
                                                     data_dict[grid_cell_ref][rr][ps]['fixed_mass[state][form][n]'][0][0][:] = np_in
-                                                if source['Form'] == 'Dissolved':
-                                                    print('\t\t\t...dissolved point source'.format(s))
+                                                elif source['Form'] == 'Dissolved':
+                                                    print('\t\t\t...dissolved point source')
+                                                    if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                        n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                    else:
+                                                        n_point_sources = 1
+                                                    ps = 'PointSource_{0}'.format(n_point_sources)
+                                                    data_dict[grid_cell_ref][rr][ps] = {}
+                                                    data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
                                                     # Units of point source emissions are kg/source/year, convert to kg/source/day
                                                     data_dict[grid_cell_ref][rr][ps]['fixed_mass_dissolved'] = source['Local_emission_kg']/365
-                                                if source['Form'] == 'Transformed':
-                                                    print('\t\t\t...transformed point source to water'.format(s))
+                                                elif source['Form'] == 'Transformed':
+                                                    print('\t\t\t...transformed point source to water')
+                                                    if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                        n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                    else:
+                                                        n_point_sources = 1
+                                                    ps = 'PointSource_{0}'.format(n_point_sources)
+                                                    data_dict[grid_cell_ref][rr][ps] = {}
+                                                    data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
                                                     data_dict[grid_cell_ref][rr][ps]['fixed_mass_transformed'] = source['Local_emission_kg']/365
 
-                                        # data_dict[grid_cell_ref][rr][ps]['fixed_mass_frequency'] = 20
-                                # If it's a diffuse source
-                                elif source['Sourcetype'] == 'A':
+                                #If it's a diffuse source
+                                if source['Sourcetype'] == 'A':
                                     if source['Compartment'] == 'NU soil' or source['Compartment'] == 'ST soil' or source['Compartment'] == 'Sludge treated soil':
-                                        if 'n_diffuse_sources' in data_dict[grid_cell_ref]:
-                                            n_diffuse_sources = data_dict[grid_cell_ref]['n_diffuse_sources'] + 1
-                                        else:
-                                            n_diffuse_sources = 1
-                                        data_dict[grid_cell_ref]['n_diffuse_sources'] = n_diffuse_sources
-                                        ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
-                                        data_dict[grid_cell_ref][ds] = {}
                                         if source['Form'] == 'Pristine':
                                             print('\t\t\t...pristine areal source to soil'.format(s))
+                                            if 'n_diffuse_sources' in data_dict[grid_cell_ref]:
+                                                n_diffuse_sources = data_dict[grid_cell_ref]['n_diffuse_sources'] + 1
+                                            else:
+                                                n_diffuse_sources = 1
+                                            data_dict[grid_cell_ref]['n_diffuse_sources'] = n_diffuse_sources
+                                            ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
+                                            data_dict[grid_cell_ref][ds] = {}
                                             # Units of areal emissions are kg/cell/year, convert to kg/m2/s
                                             # HACK this is approximately /m2, based on 7x7km grid cells, which they won't all be
                                             np_in = impose_distribution(source['Local_emission_kg']/(86400*365*7000*7000))
@@ -515,32 +540,178 @@ def parse_source_data_v2(sources, sources_temp, material, data_dict):
                                             data_dict[grid_cell_ref][ds]['input_mass_atmospheric[n][t]'] = [[np_in_n] * 365 for np_in_n in np_in]
                                         if source['Form'] == 'Dissolved':
                                             print('\t\t\t...dissolved areal source to soil'.format(s))
+                                            if 'n_diffuse_sources' in data_dict[grid_cell_ref]:
+                                                n_diffuse_sources = data_dict[grid_cell_ref]['n_diffuse_sources'] + 1
+                                            else:
+                                                n_diffuse_sources = 1
+                                            data_dict[grid_cell_ref]['n_diffuse_sources'] = n_diffuse_sources
+                                            ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
+                                            data_dict[grid_cell_ref][ds] = {}
                                             data_dict[grid_cell_ref][ds]['fixed_mass_dissolved'] = source['Local_emission_kg']/(86400*365*7000*7000)
                                         if source['Form'] == 'Transformed':
                                             print('\t\t\t...transformed areal source to soil'.format(s))
+                                            if 'n_diffuse_sources' in data_dict[grid_cell_ref]:
+                                                n_diffuse_sources = data_dict[grid_cell_ref]['n_diffuse_sources'] + 1
+                                            else:
+                                                n_diffuse_sources = 1
+                                            data_dict[grid_cell_ref]['n_diffuse_sources'] = n_diffuse_sources
+                                            ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
+                                            data_dict[grid_cell_ref][ds] = {}
                                             data_dict[grid_cell_ref][ds]['fixed_mass_transformed'] = source['Local_emission_kg']/(86400*365*7000*7000)
                                     if source['Compartment'] == 'Surface water':
                                         rr = 'RiverReach_{0}_{1}_1'.format(x, y) if 'RiverReach_{0}_{1}_1'.format(x, y) in data_dict else 'EstuaryReach_{0}_{1}_1'.format(x, y)
                                         if rr in data_dict[grid_cell_ref]:
-                                            if 'n_diffuse_sources' in data_dict[grid_cell_ref][rr]:
-                                                n_diffuse_sources = data_dict[grid_cell_ref][rr]['n_diffuse_sources'] + 1
-                                            else:
-                                                n_diffuse_sources = 1
-                                            data_dict[grid_cell_ref][rr]['n_diffuse_sources'] = n_diffuse_sources
-                                            ds = 'DiffuseSource_{0}'.format(n_point_sources)
-                                            data_dict[grid_cell_ref][rr][ds] = {}
                                             if source['Form'] == 'Pristine':
                                                 print('\t\t\t...pristine areal source to surface water'.format(s))
-                                                data_dict[grid_cell_ref][rr][ds]['fixed_mass[state][form][n]'] = np.zeros((7, 4, 5)).tolist()
-                                                np_in = impose_distribution(source['Local_emission_kg']/365)
-                                                data_dict[grid_cell_ref][rr][ds]['fixed_mass[state][form][n]'][0][0][:] = np_in
+                                                if 'n_diffuse_sources' in data_dict[grid_cell_ref][rr]:
+                                                    n_diffuse_sources = data_dict[grid_cell_ref][rr]['n_diffuse_sources'] + 1
+                                                else:
+                                                    n_diffuse_sources = 1
+                                                data_dict[grid_cell_ref][rr]['n_diffuse_sources'] = n_diffuse_sources
+                                                ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
+                                                data_dict[grid_cell_ref][rr][ds] = {}
+                                                np_in = impose_distribution(source['Local_emission_kg']/(86400*365*7000*7000))
+                                                # Use atmospheric input field for the moment as no form/state info provided
+                                                data_dict[grid_cell_ref][rr][ds]['input_mass_atmospheric[n][t]'] = [[np_in_n] * 365 for np_in_n in np_in]
                                             if source['Form'] == 'Dissolved':
                                                 print('\t\t\t...dissolved areal source to surface water'.format(s))
                                                 # Units of point source emissions are kg/source/year, convert to kg/source/day
-                                                data_dict[grid_cell_ref][rr][ds]['fixed_mass_dissolved'] = source['Local_emission_kg']/365
+                                                data_dict[grid_cell_ref][rr][ds]['fixed_mass_dissolved'] = source['Local_emission_kg']/(86400*365*7000*7000)
                                             if source['Form'] == 'Transformed':
                                                 print('\t\t\t...transformed areal source to surface water'.format(s))
-                                                data_dict[grid_cell_ref][rr][ds]['fixed_mass_transformed'] = source['Local_emission_kg']/365
+                                                data_dict[grid_cell_ref][rr][ds]['fixed_mass_transformed'] = source['Local_emission_kg']/(86400*365*7000*7000)
+
+        with open(cache_file, 'w') as cache:
+            json.dump(data_dict, cache)
+
+    return data_dict
+
+
+def parse_source_data_v3(sources, sources_temp, sources_areal, material, data_dict):
+
+    # Only check the first of the drydepo files to see if it's been updated
+    sources_last_modified = os.path.getmtime(sources)
+    cache_file = 'cache/{0}_sources.json'.format(sources_last_modified)
+
+    if os.path.isfile(cache_file):
+        with open(cache_file, 'r') as cache:
+            data_dict = json.load(cache)
+        print("\t...retrieving from cache ({0})".format(cache_file))
+    else:
+        # Areal sources from resampled raster
+        # Loop through the cells and fill texture properties using the raster
+        for compartment in ['soil', 'water']:
+            print("\t...areal sources to {0}".format(compartment))
+            # Open the appropriate texture content raster
+            source_rs = rasterio.open(sources_areal + "areal_sources_{0}_osgb.tif".format(compartment))
+            for ref, cell in data_dict.items():
+                if ref not in ['grid_dimensions[d]', 'dimensions', 'routed_reaches[branches][seeds][river_reach_ref]']:
+                    x_grid = cell['x_coord_c']
+                    y_grid = cell['y_coord_c']
+                    row, col = source_rs.index(x_grid, y_grid)
+                    arr = source_rs.read(1)
+                    if (arr[row, col].item()) > 0:
+                        if compartment == 'soil':
+                            if 'n_diffuse_sources' in data_dict[ref]:
+                                n_diffuse_sources = data_dict[ref]['n_diffuse_sources'] + 1
+                            else:
+                                n_diffuse_sources = 1
+                            ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
+                            data_dict[ref][ds] = {}
+                            data_dict[ref]['n_diffuse_sources'] = n_diffuse_sources
+                            np_in = impose_distribution(arr[row, col].item()/(86400*365*5000*5000))     # convert to kg/m2/s
+                            # Use atmospheric input field for the moment as no form/state info provided
+                            data_dict[ref][ds]['input_mass_atmospheric[n][t]'] = [[np_in_n] * 365 for np_in_n in np_in]
+                        elif compartment == 'water':
+                            n_reaches = (cell['n_river_reaches'] if 'n_river_reaches' in cell else 0) + (cell['n_estuary_reaches'] if 'n_estuary_reaches' in cell else 0)
+                            for i in range(1, n_reaches+1):
+                                rr = get_reach_ref(ref, cell, i)
+                                if 'n_diffuse_sources' in data_dict[ref][rr]:
+                                    n_diffuse_sources = data_dict[ref][rr]['n_diffuse_sources'] + 1
+                                else:
+                                    n_diffuse_sources = 1
+                                ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
+                                data_dict[ref][rr][ds] = {}
+                                data_dict[ref][rr]['n_diffuse_sources'] = n_diffuse_sources
+                                np_in = impose_distribution(arr[row, col].item()/(86400*365*5000*5000))     # convert to kg/m2/s
+                                # Use atmospheric input field for the moment as no form/state info provided
+                                data_dict[ref][rr][ds]['input_mass_atmospheric[n][t]'] = [[np_in_n] * 365 for np_in_n in np_in]
+
+        df = pd.read_csv(sources, header=0, sep=';')
+        df_temp = pd.read_csv(sources_temp, header=0, sep=';')
+        # TODO the temporal profile is only for TiO2 at the moment. Need to generalise
+        df_temp = df_temp.loc[(df_temp['Nanomaterial'] == material) & (df_temp['Application'] == 'Personal care')]
+        temp_profile = df_temp['Factor'].values
+        # For the moment, just point sources to surface waters of NP (not matrix or product embedded)
+        df = df.loc[(df['Nanomaterial'] == material) & (df['Sourcetype'] == 'P')]
+        # df.drop(['ISO3', 'Nanomaterial', 'Compartment', 'Form', 'SourceType'], axis=1)
+        print('\t...there are {0} point sources...'.format(df.shape[0]))
+        s = 0
+        for i, source in df.iterrows():
+            s = s+1
+            print('\t\t...source {0}'.format(s))
+            for grid_cell_ref, grid_cell in data_dict.items():
+                if grid_cell_ref not in ['grid_dimensions[d]', 'dimensions', 'routed_reaches[branches][seeds][river_reach_ref]']:
+                    x = grid_cell['x']
+                    y = grid_cell['y']
+                    if grid_cell_ref != 'grid_dimensions[d]':
+                        x_grid_ll = grid_cell['x_coord_ll']
+                        y_grid_ll = grid_cell['y_coord_ll']
+                        cell_lat_ll, cell_lon_ll = OSGB36toWGS84(x_grid_ll, y_grid_ll)                  # OSGB lower left coords to lat/lon
+                        cell_lat_ur, cell_lon_ur = OSGB36toWGS84(x_grid_ll + 5000, y_grid_ll + 5000)    # OSGB upper right coords to lat/lon
+                        source_lat, source_lon = source['Latitude'], source['Longitude']
+
+                        if source_lat > cell_lat_ll and source_lon > cell_lon_ll:
+                            if source_lat < cell_lat_ur and source_lon < cell_lon_ur:
+                                if source['Compartment'] == 'Surface water':
+                                    rr = 'RiverReach_{0}_{1}_1'.format(x, y) if 'RiverReach_{0}_{1}_1'.format(x, y) in data_dict[grid_cell_ref] else 'EstuaryReach_{0}_{1}_1'.format(x, y)
+                                    if rr in data_dict[grid_cell_ref]:
+                                        if source['Application'] == 'Personal care' and material == 'TiO2':
+                                            # Always pristine
+                                            print('\t\t\t...point source with temporal profile')
+                                            if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                            else:
+                                                n_point_sources = 1
+                                            ps = 'PointSource_{0}'.format(n_point_sources)
+                                            data_dict[grid_cell_ref][rr][ps] = {}
+                                            data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
+                                            np_in = [impose_distribution(t*source['Local_emission_kg']/365) for t in temp_profile]
+                                            data_dict[grid_cell_ref][rr][ps]['variable_mass_pristine[n][t]'] = np_in
+                                        else:
+                                            if source['Form'] == 'Pristine':
+                                                print('\t\t\t...pristine point source to water')
+                                                if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                    n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                else:
+                                                    n_point_sources = 1
+                                                ps = 'PointSource_{0}'.format(n_point_sources)
+                                                data_dict[grid_cell_ref][rr][ps] = {}
+                                                data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
+                                                data_dict[grid_cell_ref][rr][ps]['fixed_mass[state][form][n]'] = np.zeros((7, 4, 5)).tolist()
+                                                np_in = impose_distribution(source['Local_emission_kg']/365)
+                                                data_dict[grid_cell_ref][rr][ps]['fixed_mass[state][form][n]'][0][0][:] = np_in
+                                            elif source['Form'] == 'Dissolved':
+                                                print('\t\t\t...dissolved point source')
+                                                if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                    n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                else:
+                                                    n_point_sources = 1
+                                                ps = 'PointSource_{0}'.format(n_point_sources)
+                                                data_dict[grid_cell_ref][rr][ps] = {}
+                                                data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
+                                                # Units of point source emissions are kg/source/year, convert to kg/source/day
+                                                data_dict[grid_cell_ref][rr][ps]['fixed_mass_dissolved'] = source['Local_emission_kg']/365
+                                            elif source['Form'] == 'Transformed':
+                                                print('\t\t\t...transformed point source to water')
+                                                if 'n_point_sources' in data_dict[grid_cell_ref][rr]:
+                                                    n_point_sources = data_dict[grid_cell_ref][rr]['n_point_sources'] + 1
+                                                else:
+                                                    n_point_sources = 1
+                                                ps = 'PointSource_{0}'.format(n_point_sources)
+                                                data_dict[grid_cell_ref][rr][ps] = {}
+                                                data_dict[grid_cell_ref][rr]['n_point_sources'] = n_point_sources
+                                                data_dict[grid_cell_ref][rr][ps]['fixed_mass_transformed'] = source['Local_emission_kg']/365
 
         with open(cache_file, 'w') as cache:
             json.dump(data_dict, cache)
