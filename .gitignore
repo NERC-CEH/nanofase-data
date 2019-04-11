@@ -3,3 +3,4 @@ vendor/__pycache__/
 config.yaml
 cache/
 *.json
+*.nc

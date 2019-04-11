@@ -11,7 +11,7 @@ from deepmerge import Merger
 # Get the config options from the YAML file
 with open("config.yaml", 'r') as stream:
     try:
-        config = yaml.load(stream)
+        config = yaml.load(stream, Loader=yaml.BaseLoader)
     except yaml.YAMLError as exc:
         print(exc)
 
