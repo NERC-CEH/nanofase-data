@@ -1,0 +1,34 @@
+output_file: data.nc
+time:
+  n: 365
+  dt: 86400
+  start_date: 2015-01-01
+flow_dir:
+  type: raster
+  path: /home/sharrison/nf/data/interim/flowdir_05000_thames.tif
+  crs: EPSG:27700
+runoff:
+  type: csv
+  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/runoff.csv
+precip:
+  type: raster
+  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/rainfall/rainfall_5km_2015-{t}.tif
+  t_min: 1
+  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2015 - Great Britain. Resampled to 5 km resolution.
+  references: Tanguy, M., Prosdocimi, I., Keller, V.D.J., Terry, J., Cole, S.J., Morris, D.G., Dixon, H. (2014). Consolidation of a CEH reference rainfall dataset for hydrological purposes for the UK. CEH-Wallingford, Oxfordshire, UK.
+soil_bulk_density:
+  type: raster
+  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
+  source: European Soil Data Centre topsoil physical properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/topsoil-physical-properties-europe-based-lucas-topsoil-data.
+soil_water_content_field_capacity:
+  type: raster
+  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/soil_wc-fc.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe.
+soil_water_content_saturation:
+  type: raster
+  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/soil_wc-sat.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
+soil_hydraulic_conductivity:
+  type: raster
+  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/soil_ks.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe

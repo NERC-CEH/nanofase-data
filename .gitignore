@@ -4,3 +4,4 @@ config.yaml
 cache/
 *.json
 *.nc
+*.nc.aux.xml
