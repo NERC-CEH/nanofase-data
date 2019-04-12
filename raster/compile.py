@@ -12,14 +12,14 @@ import numpy as np
 import sys
 import util
 
-with open('config.yaml', 'r') as f:
+with open('./config.yaml', 'r') as f:
     try:
         config = yaml.load(f, Loader=yaml.BaseLoader)
     except yaml.YAMLError as e:
         print(e)
 
 # Get the list of variables and their names, units etc
-var_lookup = util.var_lookup()
+vars, vars_constant, vars_spatial, vars_spatiotemporal = util.var_lookup(config)
 
 # Flow direction first - this defines the bounds of the grid we're working to
 if config['flow_dir']['type'] == 'raster':
@@ -32,10 +32,6 @@ if config['flow_dir']['type'] == 'raster':
         print('Sorry, the flow_dir raster must be projected, not geographic. I got a geographic CRS: \'{0}\'.'.format(grid_crs))
         sys.exit()
     grid_bbox = box(*grid.bounds)                           # Create Shapely box from bounds, to clip other rasters to
-    flowdir_arr = grid.read(1, masked=True)                 # Get the flow direction array from the raster
-    grid_mask = np.ma.getmask(flowdir_arr)                  # Use the extent of the flow direction array to create a mask for all other data
-
-
 elif config['flow_dir']['type'] == 'csv':
     print("CSV flow direction not currently supported. Please provide a raster file.")
     sys.exit()
@@ -44,23 +40,22 @@ else:
     sys.exit()
 
 # Now we have our grid structure, we can create the NetCDF4 output file and set some dimensions
-nc = util.setup_netcdf_dataset(config, grid, grid_crs)
+nc, grid_mask = util.setup_netcdf_dataset(config, grid, grid_crs)
 
 # Spatial, non-temporal data
-for var in ['soil_bulk_density']:
-    # Create the variable in the NetCDF file
-    nc_var = nc.createVariable(var, 'f4',('y','x'))
-    nc_var.grid_mapping = 'crs'
-    if 'standard_name' in var_lookup[var]:
-        nc_var.standard_name = var_lookup[var]['standard_name']
-    nc_var.units = var_lookup[var]['units']
+for var in vars_spatial:
+    nc_var = util.setup_netcdf_var(var, vars[var], nc)
     # Is the data supplied in raster or csv form?
     if config[var]['type'] == 'raster':
         # Open the raster and clip to extent of grid (defined by flowdir raster)
         with rasterio.open(config[var]['path'], 'r') as rs:
             out_img, out_transform = mask(rs, [grid_bbox], crop=True)
+        values = np.ma.masked_where(grid_mask, out_img[0])
+        # Should the array be clipped?
+        if 'clip' in vars[var]:
+            np.clip(values, vars[var]['clip'][0], vars[var]['clip'][1], out=values)
         # Fill the NetCDF variable with the clipped raster
-        nc_var[:] = np.ma.masked_where(grid_mask, out_img[0])
+        nc_var[:] = values
     elif config[var]['type'] == 'csv':
         # TODO
         pass
@@ -68,29 +63,41 @@ for var in ['soil_bulk_density']:
         print("Unrecognised file type {0} for variable {1}. Type should be rs, csv or nc.".format(config[var]['type'], var))
 
 # Spatial, temporal data
-for var in ['runoff']:
+for var in vars_spatiotemporal:
     
     # Is this a raster or CSV?
-    if config[var]['type'] == 'raster':
-        rs = rasterio.open(config[var]['path'], 'r')
-        out_img, out_transform = mask(rs, [grid_bbox], crop=True)
-        # TODO need to make this temporal
-        # values.append(out_img)
-    elif config[var]['type'] == 'csv':
+    if vars[var]['type'] == 'raster':
+        values = []
+        nc_var = util.setup_netcdf_var(var, vars[var], nc)
+        # If the {t} tag is in the path, there must be one raster file per timestep
+        if '{t}' in vars[var]['path']:
+            t_min = 0 if 't_min' not in vars[var] else int(vars[var]['t_min'])
+            for t in range(t_min, int(config['time']['n']) + t_min):
+                with rasterio.open(vars[var]['path'].replace('{t}',str(t)), 'r') as rs:
+                    out_img, out_transform = mask(rs, [grid_bbox], crop=True)
+                values = np.ma.masked_where(grid_mask, out_img[0])
+                # Should the array be clipped?
+                if 'clip' in vars[var]:
+                    np.clip(values, vars[var]['clip'][0], vars[var]['clip'][1], out=values)
+                # Add this time step to the NetCDF file as a masked array
+                nc_var[t-1,:,:] = values
+       
+    elif vars[var]['type'] == 'csv':
         df = pd.read_csv(config[var]['path'], header=0)
         values = []
-        nc_var = nc.createVariable(var, 'f4', ('t','y','x'))
-        nc_var.standard_name = var_lookup[var]['standard_name']
-        nc_var.units = var_lookup[var]['units']
-        nc_var.grid_mapping = 'crs'
+        nc_var = util.setup_netcdf_var(var, vars[var], nc)
         for t in range(1,df['t'].max()+1):
             df_t = df[df['t'] == t]
             pt = df_t.pivot_table(index='y', columns='x', values=var)
+            values = np.ma.masked_where(grid_mask, pt.values)
             # Check the pivot table's shape is that of the grid we're using
             if pt.shape != grid.shape:
                 print("Inconsistent shape between {0} csv file and overall grid system ({1} and {2}). Check indices set correctly.".format(var, pt.shape, grid.shape))
                 sys.exit()
+            # Should the array be clipped?
+            if 'clip' in vars[var]:
+                np.clip(values, vars[var]['clip'][0], vars[var]['clip'][1], out=values)
             # Add this time step to the NetCDF file as a masked array
-            nc_var[t-1,:,:] = np.ma.masked_where(grid_mask, pt.values)
+            nc_var[t-1,:,:] = values
     else:
         print("Unrecognised file type {0} for variable {1}. Type should be rs, csv or nc.".format(config[var]['type'], var))
