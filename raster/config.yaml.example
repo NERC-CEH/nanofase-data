@@ -5,30 +5,50 @@ time:
   start_date: 2015-01-01
 flow_dir:
   type: raster
-  path: /home/sharrison/nf/data/interim/flowdir_05000_thames.tif
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/flowdir_05000_thames.tif
   crs: EPSG:27700
 runoff:
   type: csv
-  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/runoff.csv
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/runoff.csv
+  units: mm/day
 precip:
   type: raster
-  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/rainfall/rainfall_5km_2015-{t}.tif
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/rainfall/rainfall_5km_2015-{t}.tif
+  units: mm/day
   t_min: 1
   source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2015 - Great Britain. Resampled to 5 km resolution.
   references: Tanguy, M., Prosdocimi, I., Keller, V.D.J., Terry, J., Cole, S.J., Morris, D.G., Dixon, H. (2014). Consolidation of a CEH reference rainfall dataset for hydrological purposes for the UK. CEH-Wallingford, Oxfordshire, UK.
 soil_bulk_density:
   type: raster
-  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
+  units: t/m**3
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
   source: European Soil Data Centre topsoil physical properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/topsoil-physical-properties-europe-based-lucas-topsoil-data.
 soil_water_content_field_capacity:
   type: raster
-  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/soil_wc-fc.tif
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/soil_wc-fc.tif
   source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe.
 soil_water_content_saturation:
   type: raster
-  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/soil_wc-sat.tif
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/soil_wc-sat.tif
   source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
 soil_hydraulic_conductivity:
   type: raster
-  path: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/model-preprocessed/soil_ks.tif
+  units: cm/day
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/soil_ks.tif
   source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
+soil_texture_sand_content:
+  type: raster
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/sand-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_clay_content:
+  type: raster
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/clay-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_silt_content:
+  type: raster
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/silt-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_coarse_frag_content:
+  type: raster
+  path: c:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/model-preprocessed/coarse-frag-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
