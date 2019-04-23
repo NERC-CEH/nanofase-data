@@ -1,0 +1,50 @@
+# The model_vars.yaml file is an internal file that describes the input variables required by the
+# NanoFASE model and those that should be compiled by the nanofase-data script. *You should not need
+# to edit anything in this file*, but the standard_name, long_name and comment properties are passed
+# as variable attributes to the compiled NetCDF file, so feel free to edit these. Editing other
+# properties will likely break something.
+runoff:
+    standard_name: runoff_flux
+    to_units: m/timestep
+    fill_value: 0
+    clip: [0.0, None]
+    dims: ['t', 'y', 'x']
+precip:
+    standard_name: rainfall_flux
+    to_units: m/timestep
+    comment: Rainfall amount (kg m-2) is equivalent to the rainfall depth (mm)
+    dims: ['t', 'y', 'x']
+    vartype: f8
+soil_bulk_density:
+    long_name: bulk density of soil
+    to_units: kg/m**3
+    dims: ['y', 'x']
+soil_water_content_field_capacity:
+    standard_name: volume_fraction_of_condensed_water_in_soil_at_field_capacity
+    to_units: cm**3/cm**3
+    dims: ['y', 'x']
+soil_water_content_saturation:
+    standard_name: volume_fraction_of_condensed_water_in_soil
+    long_name: 'water content of soil at saturation'
+    to_units: cm**3/cm**3
+    dims: ['y', 'x']
+soil_hydraulic_conductivity:
+    standard_name: soil_hydraulic_conductivity_at_saturation
+    to_units: m/s
+    dims: ['y', 'x']
+soil_texture_clay_content:
+    standard_name: volume_fraction_of_clay_in_soil
+    to_units: kg/kg
+    dims: ['y', 'x']
+soil_texture_sand_content:
+    standard_name: volume_fraction_of_sand_in_soil
+    to_units: kg/kg
+    dims: ['y', 'x']
+soil_texture_silt_content:
+    standard_name: volume_fraction_of_silt_in_soil
+    to_units: kg/kg
+    dims: ['y', 'x']
+soil_texture_coarse_frag_content:
+    long_name: coarse fragment content of soil
+    to_units: kg/kg
+    dims: ['y', 'x']

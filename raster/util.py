@@ -1,5 +1,7 @@
 from netCDF4 import Dataset
 import numpy as np
+import yaml
+import sys
 
 def setup_netcdf_dataset(config, grid, crs):
     """Create NetCDF file, add required dimensions and coordinate variables"""
@@ -36,14 +38,46 @@ def setup_netcdf_dataset(config, grid, crs):
     nc_var = nc.createVariable('flow_dir', 'i4', ('y', 'x'))
     nc_var.long_name = 'flow direction of water in grid cell'
     nc_var[:] = flow_dir
+    # Route the reaches using the flow direction
+    routed_reaches = routing(flow_dir)
     # Return the NetCDF file
     return nc, grid_mask
 
+
+def outflow_from_flow_dir(flow_dir, x, y):
+    """Get the outflow cell reference given the current cell
+    reference and a flow direction."""
+    xy_out = {
+        1: (x+1, y),
+        2: (x+1, y+1),
+        4: (x, y+1),
+        8: (x-1, y+1),
+        16: (x-1, y),
+        32: (x-1, y-1),
+        64: (x, y-1),
+        128: (x+1, y-1)
+    }
+    return xy_out[flow_dir]
+
+
+def routing(flow_dir_array):
+    pass
+    # x, y = np.meshgrid(np.arange(flow_dir_array.shape[0]), np.arange(flow_dir_array.shape[1]))
+    # outflow_array = outflow_from_flow_dir(flow_dir_array, x, y)
+    # outflow_var = setup_netcdf_var('outflow')
+    # for x, xy in enumerate(flow_dir_array):
+    #     for y, flow_dir in enumerate(xy):
+    #         if flow_dir[x][y] != np.ma.masked:
+    #             # Create an outflow array
+
+
+
 def setup_netcdf_var(var_name, var_dict, nc):
     """Create and fill attributes in NetCDF file for given variable."""
-    fill_value = var_dict['fill_value'] if 'fill_value' in var_dict else None
-    dims = var_dict['dims'] if 'dims' in var_dict else ()
-    nc_var = nc.createVariable(var_name, 'f4', dims, fill_value=fill_value)
+    fill_value = float(var_dict['fill_value']) if 'fill_value' in var_dict else None
+    dims = tuple(var_dict['dims']) if 'dims' in var_dict else ()
+    vartype = var_dict['vartype'] if 'vartype' in var_dict else 'f4'
+    nc_var = nc.createVariable(var_name, vartype, dims, fill_value=fill_value)
     if 'standard_name' in var_dict:
         nc_var.standard_name = var_dict['standard_name']
     if 'long_name' in var_dict:
@@ -52,53 +86,23 @@ def setup_netcdf_var(var_name, var_dict, nc):
         nc_var.source = var_dict['source']
     if 'references' in var_dict:
         nc_var.references = var_dict['references']
-    nc_var.units = var_dict['units']
+    nc_var.units = var_dict['to_units']
     nc_var.grid_mapping = 'crs'
     return nc_var
 
 def var_lookup(config):
-    vars = {
-        'runoff': {
-            'standard_name': 'runoff_flux',
-            'units': 'mm day-1',
-            'fill_value': 0,
-            'clip': [0., None],
-            'dims': ('t', 'y', 'x')
-        },
-        'precip': {
-            'standard_name': 'rainfall_amount',
-            'units': 'kg m-2',
-            'comment': 'Rainfall amount (kg m-2) is equivalent to the rainfall depth (mm).',
-            'dims': ('t', 'y', 'x')
-        },
-        'soil_bulk_density': {
-            'long_name': 'bulk density of soil',
-            'units': 'T m-3',
-            'dims': ('y', 'x'),
-        },
-        'soil_water_content_field_capacity': {
-            'standard_name': 'soil_moisture_content_at_field_capacity',
-            'units': 'cm3 cm-3',
-            'dims': ('y', 'x')
-        },
-        'soil_water_content_saturation': {
-            'standard_name': 'soil_moisture_content',
-            'long_name': 'water content of soil at saturation',
-            'units': 'cm3 cm-3',
-            'dims': ('y', 'x')
-        },
-        'soil_hydraulic_conductivity': {
-            'standard_name': 'soil_hydraulic_conductivity_at_saturation',
-            'units': 'cm day-1',
-            'dims': ('y', 'x')
-        },
-    }
-    # Add config options to the vars dict
+    # Open the internal config file to create variable attributes (model_vars.yaml)
+    with open('./model_vars.yaml', 'r') as f:
+        try:
+            vars = yaml.load(f, Loader=yaml.BaseLoader)
+        except yaml.YAMLError as e:
+            print(e)
+    # Add config options to the user-defined var dict (config.yaml)
     for k, v in config.items():
         if k in vars:
             vars[k].update(v)
     # Get a list of constants, spatial and spatiotemporal variables
     vars_constant = [k for k, v in vars.items() if ('dims' not in v) or (v['dims'] == None)]
-    vars_spatial = [k for k, v in vars.items() if ('dims' in v) and (v['dims'] == ('y', 'x'))]
-    vars_spatiotemporal = [k for k, v in vars.items() if ('dims' in v) and (v['dims'] == ('t', 'y', 'x'))]
+    vars_spatial = [k for k, v in vars.items() if ('dims' in v) and (v['dims'] == ['y', 'x'])]
+    vars_spatiotemporal = [k for k, v in vars.items() if ('dims' in v) and (v['dims'] == ['t', 'y', 'x'])]
     return vars, vars_constant, vars_spatial, vars_spatiotemporal

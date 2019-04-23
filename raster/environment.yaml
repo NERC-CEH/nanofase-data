@@ -1,0 +1,11 @@
+name: nanofase-data
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - pandas
+  - rasterio
+  - pyyaml
+  - netCDF4
+  - shapely
+  - pint
