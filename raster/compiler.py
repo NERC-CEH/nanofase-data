@@ -11,11 +11,11 @@ import sys
 
 class Compiler:
 
-    def __init__(self):
+    def __init__(self, config_path, model_vars_path):
         """Initialise the compiler by reading the config and model_var files,
         combining these and generating list of vars according to dimensionality.
         Also set up the unit registry and define 'timestep' as a unit."""
-        with open('./config.yaml', 'r') as config_file, open('./model_vars.yaml', 'r') as model_vars_file:
+        with open(config_path, 'r') as config_file, open(model_vars_path, 'r') as model_vars_file:
             try:
                 self.config = yaml.load(config_file, Loader=yaml.BaseLoader)
                 self.vars = yaml.load(model_vars_file, Loader=yaml.BaseLoader)
@@ -38,7 +38,6 @@ class Compiler:
     def parse_flow_dir(self):
         """Parse the flow direction variable and define the CRS and mask for other
         variables based on this. This step must be performed before NetCDF file is generated."""
-        print("Creating variables...\n\t...flow_dir")
         if self.config['flow_dir']['type'] == 'raster':
             self.grid = rasterio.open(self.config['flow_dir']['path'])
             # If a CRS has been specified for the flowdir raster, use this instead of the raster's
@@ -115,89 +114,86 @@ class Compiler:
         return nc_var
 
 
+    def parse_raster(self, var_name, units, path=None):
+        """Parse a variable (or timestep of a variable) given by raster."""
+        var_dict = self.vars[var_name]
+        if path is None:
+            path = var_dict['path']
+        # Open the raster and clip to extent of grid (defined by flowdir raster)
+        with rasterio.open(path, 'r') as rs:
+            out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
+        values = np.ma.masked_where(self.grid_mask, out_img[0])
+        # Should the array be clipped?
+        if 'clip' in var_dict:
+            try:
+                min = float(var_dict['clip'][0])
+            except ValueError:
+                min = None
+            try:
+                max = float(var_dict['clip'][1])
+            except ValueError:
+                max = None
+            np.clip(values, min, max, out=values)
+        # Do the unit conversion
+        values = units[0] * values
+        values.ito(units[1])
+        # Return the values
+        return values
+
+
     def parse_spatial_var(self, var_name):
         """Create and fill attributes in NetCDF file for given variable."""
         nc_var = self.setup_netcdf_var(var_name)
         var_dict = self.vars[var_name]
 
+         # Check if we're converting units
+        from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
+        to_units = self.ureg(var_dict['to_units'])
+        if from_units != to_units:
+            print('\t\t...converting {0.units:~P} to {1.units:~P}'.format(from_units, to_units))
+
         # Is the data supplied in raster or csv form?
-        if var_dict['type'] == 'raster':
-            # Open the raster and clip to extent of grid (defined by flowdir raster)
-            with rasterio.open(var_dict['path'], 'r') as rs:
-                out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
-            values = np.ma.masked_where(self.grid_mask, out_img[0])
-            # Should the array be clipped?
-            if 'clip' in var_dict:
-                try:
-                    min = float(var_dict['clip'][0])
-                except ValueError:
-                    min = None
-                try:
-                    max = float(var_dict['clip'][1])
-                except ValueError:
-                    max = None
-                np.clip(values, min, max, out=values)
-            # Check if we're converting units
-            from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
-            to_units = self.ureg(var_dict['to_units'])
-            if from_units != to_units:
-                print('\t\t...converting {0.units:~P} to {1.units:~P}'.format(from_units, to_units))
-            # Do the conversion
-            values = from_units * values
-            values.ito(to_units)
+        if var_dict['type'] in ['raster', 'nc']:
+            # Parse the raster
+            values = self.parse_raster(var_name, (from_units, to_units))
             # Fill the NetCDF variable with the clipped raster (without the units)
             nc_var[:] = values.magnitude
         elif var_dict['type'] == 'csv':
             # TODO
-            pass
+            print("Sorry, only raster spatial variables supported at the moment. Variable: {0}.".format(var_name))
         else: 
-            print("Unrecognised file type {0} for variable {1}. Type should be rs, csv or nc.".format(var_dict['type'], var))
+            print("Unrecognised file type {0} for variable {1}. Type should be raster, csv or nc.".format(var_dict['type'], var_name))
 
 
     def parse_spatiotemporal_var(self, var_name):
         nc_var = self.setup_netcdf_var(var_name)
         var_dict = self.vars[var_name]
+
+        # Check if we're converting units (the actual converting is done per timestep, below)
+        from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
+        to_units = self.ureg(var_dict['to_units'])
+        if from_units != to_units:
+            print('\t\t...converting {0.units:~P} to {1.units:~P}'.format(from_units, to_units))
+
         # Is this a raster or CSV?
         if var_dict['type'] == 'raster':
-            values = []
-            # Check if we're converting units (the actual converting is done per timestep, below)
-            from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
-            to_units = self.ureg(var_dict['to_units'])
-            if from_units != to_units:
-                print('\t\t...converting {0.units:~P} to {1.units:~P}'.format(from_units, to_units))
             # If the {t} tag is in the path, there must be one raster file per timestep
             if '{t}' in var_dict['path']:
+                # Zero-indexed or higher?
                 t_min = 0 if 't_min' not in var_dict else int(var_dict['t_min'])
+                # Loop through the time steps and parse raster for each
                 for t in range(t_min, int(self.config['time']['n']) + t_min):
-                    with rasterio.open(var_dict['path'].replace('{t}',str(t)), 'r') as rs:
-                        out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
-                    values = np.ma.masked_where(self.grid_mask, out_img[0])
-                    # Should the array be clipped?
-                    if 'clip' in var_dict:
-                        try:
-                            min = float(var_dict['clip'][0])
-                        except ValueError:
-                            min = None
-                        try:
-                            max = float(var_dict['clip'][1])
-                        except ValueError:
-                            max = None
-                        np.clip(values, min, max, out=values)
-                    # Convert units if "units" specified in config, to the to_units in model_vars
-                    values = from_units * values
-                    values.ito(to_units)
+                    path = var_dict['path'].replace('{t}',str(t))
+                    values = self.parse_raster(var_name, (from_units, to_units), path)
                     # Add this time step to the NetCDF file as a masked array
                     nc_var[t-1,:,:] = values.magnitude
+            else:
+                print("Spatiotemporal variable ({0}) in raster format must be provided by one raster file per time step, with path denoted by /{t/}".format(var_name))
            
         elif var_dict['type'] == 'csv':
             df = pd.read_csv(var_dict['path'], header=0)
-            values = []
-            # Check if we're converting units (the actual converting is done per timestep, below)
-            from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
-            to_units = self.ureg(var_dict['to_units'])
-            if from_units != to_units:
-                print('\t\t...converting {0.units:~P} to {1.units:~P}'.format(from_units, to_units))
-            # Loop through the timesteps
+
+            # Loop through the timesteps and create pivot table to obtain spatial array for each
             for t in range(1,df['t'].max()+1):
                 df_t = df[df['t'] == t]
                 pt = df_t.pivot_table(index='y', columns='x', values=var_name)
