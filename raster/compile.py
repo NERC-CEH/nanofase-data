@@ -56,9 +56,11 @@ for var in vars_spatial:
     nc_var = util.setup_netcdf_var(var, vars[var], nc)
     # Is the data supplied in raster or csv form?
     if config[var]['type'] == 'raster':
-        # Open the raster and clip to extent of grid (defined by flowdir raster)
+        # Open the raster and clip to extent of grid (defined by flowdir raster).
+        # filled=False in Rasterio's mask ensures a masked array is returned
         with rasterio.open(config[var]['path'], 'r') as rs:
-            out_img, out_transform = mask(rs, [grid_bbox], crop=True)
+            out_img, out_transform = mask(rs, [grid_bbox], crop=True, filled=False)
+            row, col = rs.index(590000, 170000)
         values = np.ma.masked_where(grid_mask, out_img[0])
         # Should the array be clipped?
         if 'clip' in vars[var]:
