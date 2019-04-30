@@ -72,12 +72,13 @@ def routing(flow_dir_array):
 
 
 
-def setup_netcdf_var(var_name, var_dict, nc):
+def setup_netcdf_var(var_name):
     """Create and fill attributes in NetCDF file for given variable."""
+    var_dict = self.vars[var_name]
     fill_value = float(var_dict['fill_value']) if 'fill_value' in var_dict else None
     dims = tuple(var_dict['dims']) if 'dims' in var_dict else ()
     vartype = var_dict['vartype'] if 'vartype' in var_dict else 'f4'
-    nc_var = nc.createVariable(var_name, vartype, dims, fill_value=fill_value)
+    nc_var = self.nc.createVariable(var_name, vartype, dims, fill_value=fill_value)
     if 'standard_name' in var_dict:
         nc_var.standard_name = var_dict['standard_name']
     if 'long_name' in var_dict:

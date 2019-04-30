@@ -5,3 +5,4 @@ cache/
 *.json
 *.nc
 *.nc.aux.xml
+docs/_build/
