@@ -26,9 +26,19 @@ class Compiler:
             if k in self.vars:
                 self.vars[k].update(v)
         # Get a list of constants, spatial and spatiotemporal variables
-        self.vars_constant = [k for k, v in self.vars.items() if ('dims' not in v) or (v['dims'] == None)]
-        self.vars_spatial = [k for k, v in self.vars.items() if ('dims' in v) and (v['dims'] == ['y', 'x'])]
-        self.vars_spatiotemporal = [k for k, v in self.vars.items() if ('dims' in v) and (v['dims'] == ['t', 'y', 'x'])]
+        self.vars_constant = []
+        self.vars_spatial = []
+        self.vars_spatial_1d = []
+        self.vars_spatiotemporal = []
+        for k, v in self.vars.items():
+            if ('dims' not in v) or (v['dims'] == None):
+                self.vars_constant.append(k)
+            elif ('dims' in v) and (v['dims'] == ['y', 'x']):
+                self.vars_spatial.append(k)
+            elif ('dims' in v) and (v['dims'] == ['t', 'y', 'x']):
+                self.vars_spatiotemporal.append(k)
+            elif ('dims' in v) and (all(x in v['dims'] for x in ['y', 'x'])) and (len(v['dims']) == 3):
+                self.vars_spatial_1d.append(k)
         # Setup the unit registry
         self.ureg = UnitRegistry()
         # Define the timestep as a unit, based on that given in config file
