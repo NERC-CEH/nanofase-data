@@ -859,9 +859,9 @@ def parse_tidal_bounds(tidal_bounds, data_dict):
                 temp_grid_cell_dict['n_estuary_reaches'] = temp_grid_cell_dict.pop('n_river_reaches')
 
                 # HACK set the distance to mouth
-                dx = 585000 - temp_grid_cell_dict['x_coord_c']
-                dy = 180000 - temp_grid_cell_dict['y_coord_c']
-                distance_to_mouth = math.sqrt(dx**2 + dy**2)*1.4
+                dx = 601071 - temp_grid_cell_dict['x_coord_c']
+                dy = 182173 - temp_grid_cell_dict['y_coord_c']
+                distance_to_mouth = math.sqrt(dx**2 + dy**2)*1.15
                 x_grid = grid_cell_ref.split('_')[1]
                 y_grid = grid_cell_ref.split('_')[2]
                 for i in range(1, temp_grid_cell_dict['n_estuary_reaches']+1):
