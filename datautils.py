@@ -589,7 +589,7 @@ def parse_source_data_v2(sources, sources_temp, material, data_dict):
 
 def parse_source_data_v3(sources, sources_temp, sources_areal, material, data_dict):
 
-    # Only check the first of the drydepo files to see if it's been updated
+    # Cache
     sources_last_modified = os.path.getmtime(sources)
     cache_file = 'cache/{0}_sources.json'.format(sources_last_modified)
 
@@ -619,7 +619,7 @@ def parse_source_data_v3(sources, sources_temp, sources_areal, material, data_di
                             ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
                             data_dict[ref][ds] = {}
                             data_dict[ref]['n_diffuse_sources'] = n_diffuse_sources
-                            np_in = impose_distribution(arr[row, col].item()/(86400*365*5000*5000))     # convert to kg/m2/s
+                            np_in = impose_distribution(arr[row, col].item()/(86400*365))     # Convert from kg/m2/yr to kg/m2/s
                             # Use atmospheric input field for the moment as no form/state info provided
                             data_dict[ref][ds]['input_mass_atmospheric[n][t]'] = [[np_in_n] * 365 for np_in_n in np_in]
                         elif compartment == 'water':
@@ -633,7 +633,7 @@ def parse_source_data_v3(sources, sources_temp, sources_areal, material, data_di
                                 ds = 'DiffuseSource_{0}'.format(n_diffuse_sources)
                                 data_dict[ref][rr][ds] = {}
                                 data_dict[ref][rr]['n_diffuse_sources'] = n_diffuse_sources
-                                np_in = impose_distribution(arr[row, col].item()/(86400*365*5000*5000))     # convert to kg/m2/s
+                                np_in = impose_distribution(arr[row, col].item()/(86400*365))    # Convert from kg/m2/yr to kg/m2/s
                                 # Use atmospheric input field for the moment as no form/state info provided
                                 data_dict[ref][rr][ds]['input_mass_atmospheric[n][t]'] = [[np_in_n] * 365 for np_in_n in np_in]
 

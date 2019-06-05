@@ -44,7 +44,7 @@ print('Parsing atmospheric data...')
 atmospheric_data_dict = du.parse_atmospheric_data(config['atmospheric_dry_depo_dir'],
                                                   config['atmospheric_wet_depo_dir'],
                                                   data_dict,
-                                                  config['timesteps'],
+                                                  int(config['timesteps']),
                                                   config['material'])
 datasets.append(atmospheric_data_dict)
 
@@ -86,7 +86,7 @@ pfactor_data_dict = du.parse_pfactor_data(config['p-factor'], data_dict)
 datasets.append(pfactor_data_dict)
 
 print('Parsing precipitation data...')
-precip_data_dict = du.parse_precipitation_data(config['precipitation_dir'], data_dict, config['timesteps'])
+precip_data_dict = du.parse_precipitation_data(config['precipitation_dir'], data_dict, int(config['timesteps']))
 datasets.append(precip_data_dict)
 
 # Merge the datasets
