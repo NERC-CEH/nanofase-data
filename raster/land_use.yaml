@@ -1,0 +1,58 @@
+111:                                # Continuous urban fabric
+    - [ 'urban_no_soil', 0.7 ]
+    - [ 'urban_green_residential', 0.3 ]
+112:                                # Discontinous urban fabric
+    - [ 'urban_no_soil', 0.4 ]
+    - [ 'urban_green_residential', 0.6 ]
+121:                                # Industrial or commerical units
+    - [ 'urban_no_soil', 0.5 ]
+    - [ 'urban_industrial_soil', 0.5 ]
+122:                                # Road and rail networks
+    - [ 'urban_no_soil', 0.4 ]
+    - [ 'urban_industrial_soil', 0.6 ]
+123:                                # Port areas
+    - [ 'urban_no_soil', 0.6 ]
+    - [ 'urban_industrial_soil', 0.4 ]
+124:                                # Airports
+    - ['urban_no_soil', 0.2]
+    - ['urban_industrial_soil', 0.8]
+131: [ 'urban_industrial_soil' ]    # Mineral extraction
+132: [ 'urban_industrial_soil' ]    # Dump sites
+133: [ 'urban_industrial_soil' ]    # Construction sites
+141: [ 'urban_parks_leisure' ]      # Green urban areas
+142: [ 'urban_parks_leisure' ]      # Sport and leisure facilities
+211: [ 'arable' ]                   # Non-irrigated arable land
+212: [ 'arable' ]                   # Permanently irrigated land
+213: [ 'arable' ]                   # Rice fields
+221: [ 'arable' ]                   # Vineyards
+222: [ 'arable' ]                   # Fruit trees and berry plantations
+223: [ 'arable' ]                   # Olive groves
+231: [ 'arable' ]                   # Pastures
+241: [ 'arable' ]                   # Annual crops associated with permanent crops
+242: [ 'arable' ]                   # Complex cultivation patterns
+243: [ 'arable' ]                   # Land principally occupied by agriculture, with significant areas of natural vegetation
+244: [ 'arable' ]                   # Agro-forestry areas
+311: [ 'deciduous' ]                # Deciduous woodland
+312: [ 'coniferous' ]               # Coniferous woodland
+313:                                # Mixed forests
+    - [ 'deciduous', 0.5 ]
+    - [ 'coniferous', 0.5 ]
+321: [ 'grassland' ]                # Natural grassland
+322: [ 'heathland' ]                # Moors and heathland
+323: [ 'heathland' ]                # Sclerophyllous vegetation
+324: [ 'heathland' ]                # Transitional woodland/scrub
+331: [ 'desert' ]                   # Beaches, dunes, sands
+332: [ 'other' ]                    # Bare rock
+333: [ 'heathland' ]                # Sparsely vegetated areas
+334: [ 'heathland' ]                # Burnt areas
+335: [ 'other' ]                    # Glaciers and perpetual snow
+411: [ 'other' ]                    # Inland marshes
+412: [ 'heathland' ]                # Peatbogs
+421: [ 'other' ]                    # Salt marshes
+422: [ 'other' ]                    # Salines
+423: [ 'other' ]                    # Intertidal flats
+511: [ 'water' ]                    # Water courses
+512: [ 'water' ]                    # Water bodies
+521: [ 'water' ]                    # Coastal lagoons
+522: [ 'water' ]                    # Estuaries
+523: [ 'water' ]                    # Sea and ocean

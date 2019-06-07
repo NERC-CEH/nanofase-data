@@ -25,7 +25,7 @@ soil_water_content_field_capacity:
   dims: ['y', 'x']
 soil_water_content_saturation:
   standard_name: volume_fraction_of_condensed_water_in_soil
-  long_name: 'water content of soil at saturation'
+  long_name: water content of soil at saturation
   to_units: cm**3/cm**3
   dims: ['y', 'x']
 soil_hydraulic_conductivity:
@@ -51,4 +51,17 @@ soil_texture_coarse_frag_content:
 land_use:
   long_name: land use categorised by NanoFASE model land use categories
   to_units: ''
-  dims: ['p', 'y', 'x']
+  dims: ['l', 'y', 'x']
+  cats: 
+    - urban_no_soil
+    - urban_parks_leisure
+    - urban_industrial_soil
+    - urban_green_residential
+    - arable
+    - grassland
+    - deciduous
+    - coniferous
+    - heathland
+    - water
+    - desert
+    - other
