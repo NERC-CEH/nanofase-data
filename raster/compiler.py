@@ -341,14 +341,29 @@ class Compiler:
 
     def routing(self):
         """Use the flow direction to route the waterbody network."""
+        # Create the masked arrays to being with, such that they're masked by the grid mask
         outflow_arr = np.ma.zeros((*self.flow_dir.shape, 2), dtype=int)
-        outflow_arr.mask = self.grid_mask           # Set the mask
-        print(outflow_arr)
+        inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, 7, 2), dtype=int), mask=True)      # Max of seven inflows
+        outflow_arr.mask = self.grid_mask           # Set the grid mask
+        # Set the outflows array
         for index, cell in np.ndenumerate(self.flow_dir):
+            x, y = index[0] + 1, index[1] + 1
             if not self.flow_dir.mask[index]:       # Only for non-masked elements
-                print(self.outflow_from_flow_dir(*index, cell))
-                outflow_arr[index] = self.outflow_from_flow_dir(*index, cell)
-        # print(outflow_arr)
+                outflow_arr[index] = self.outflow_from_flow_dir(x, y, cell)
+        # Use that to set the inflows array
+        for i, xy in enumerate(outflow_arr):
+            for j, outflow in enumerate(xy):
+                if not self.flow_dir.mask[i,j]:
+                    x, y = i + 1, j + 1
+                    x_out, y_out = outflow[0] - 1, outflow[1] - 1
+                    k = 0
+                    while k < 7 and inflows_arr[x_out,y_out,k].mask.all():
+                        k = k + 1 
+                    if k < 7:
+                        inflows_arr[x_out,y_out,k] = [x,y]
+                    # print(x_out,y_out)
+
+        print(inflows_arr)
         sys.exit()
 
 
