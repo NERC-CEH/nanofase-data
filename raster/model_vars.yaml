@@ -65,3 +65,8 @@ land_use:
     - water
     - desert
     - other
+is_estuary:
+  long_name: is waterbody in this cell an estuary
+  to_units: ''
+  dims: ['y', 'x']
+  vartype: uint8

@@ -1,3 +1,4 @@
+import netCDF4
 from netCDF4 import Dataset
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ from shapely.geometry import box
 import yaml
 from pint import UnitRegistry
 import sys
+from router import Router
 
 class Compiler:
 
@@ -47,6 +49,8 @@ class Compiler:
         self.ureg = UnitRegistry()
         # Define the timestep as a unit, based on that given in config file
         self.ureg.define('timestep = {0} * second'.format(self.config['time']['dt']))
+        # Create empty dict ready to save vars to memory
+        self.saved_vars = {}
     
 
     def parse_flow_dir(self):
@@ -102,12 +106,16 @@ class Compiler:
         y.standard_name = 'projection_y_coordinate'
         y.axis = 'Y'
         y[:] = [self.grid.bounds.top - i * self.grid.res[1] - 0.5 * self.grid.res[1] for i in range(self.grid.height)]
+        # Grid dimension (2D) and max number of waterbodies per cell
+        d_dim = self.nc.createDimension('d', 2)
+        w_dim = self.nc.createDimension('w', 7)
         # Add the flow direction
         self.flow_dir = self.grid.read(1, masked=True)              # Get the flow direction array from the raster
         self.grid_mask = np.ma.getmask(self.flow_dir)               # Use the extent of the flow direction array to create a mask for all other data
         nc_var = self.nc.createVariable('flow_dir', 'i4', ('y', 'x'))
         nc_var.long_name = 'flow direction of water in grid cell'
         nc_var[:] = self.flow_dir
+
 
     def setup_netcdf_var(self, var_name, extra_dims=None):
         var_dict = self.vars[var_name]
@@ -163,7 +171,7 @@ class Compiler:
         return values
 
 
-    def parse_spatial_var(self, var_name):
+    def parse_spatial_var(self, var_name, save=False):
         # Create and fill attributes in NetCDF file for given variable.
         nc_var = self.setup_netcdf_var(var_name)
         var_dict = self.vars[var_name]
@@ -180,6 +188,8 @@ class Compiler:
             values = self.parse_raster(var_name, (from_units, to_units))
             # Fill the NetCDF variable with the clipped raster (without the units)
             nc_var[:] = values.magnitude
+            if save:
+                self.saved_vars[var_name] = values.magnitude
         elif var_dict['type'] == 'csv':
             # TODO
             print("Sorry, only raster spatial variables supported at the moment. Variable: {0}.".format(var_name))
@@ -188,7 +198,6 @@ class Compiler:
 
 
     def parse_spatial_1d_var(self, var_name):
-
         var_dict = self.vars[var_name]
         record_dim = [d for d in var_dict['dims'] if d not in ['x', 'y']][0]    # Get the dim that isn't x or y
 
@@ -342,29 +351,100 @@ class Compiler:
     def routing(self):
         """Use the flow direction to route the waterbody network."""
         # Create the masked arrays to being with, such that they're masked by the grid mask
-        outflow_arr = np.ma.zeros((*self.flow_dir.shape, 2), dtype=int)
-        inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, 7, 2), dtype=int), mask=True)      # Max of seven inflows
+        router = Router(self.flow_dir)              # Set up the router to deal with common routing tasks
+        outflow_arr = np.ma.zeros((*self.flow_dir.shape, 2), dtype=np.dtype('i2'))
         outflow_arr.mask = self.grid_mask           # Set the grid mask
-        # Set the outflows array
-        for index, cell in np.ndenumerate(self.flow_dir):
-            x, y = index[0] + 1, index[1] + 1
-            if not self.flow_dir.mask[index]:       # Only for non-masked elements
-                outflow_arr[index] = self.outflow_from_flow_dir(x, y, cell)
-        # Use that to set the inflows array
-        for i, xy in enumerate(outflow_arr):
-            for j, outflow in enumerate(xy):
-                if not self.flow_dir.mask[i,j]:
-                    x, y = i + 1, j + 1
-                    x_out, y_out = outflow[0] - 1, outflow[1] - 1
-                    k = 0
-                    while k < 7 and inflows_arr[x_out,y_out,k].mask.all():
-                        k = k + 1 
-                    if k < 7:
-                        inflows_arr[x_out,y_out,k] = [x,y]
-                    # print(x_out,y_out)
+        inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, 7, 2), dtype=np.dtype('i2')), mask=True)      # Max of seven inflows
+        n_waterbodies = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype('i2')), mask=True)
+        is_headwater = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype('i1')), mask=True)
+        waterbody_code = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype(('U', 70))), mask=True)
 
-        print(inflows_arr)
-        sys.exit()
+        # Use the flow direction to set outflow and inflows to each cell
+        for index, cell in np.ndenumerate(self.flow_dir):
+            y, x = index[0] + 1, index[1] + 1
+            if not self.grid_mask[index]:       # Only for non-masked elements
+                outflow_arr[index] = router.outflow_from_flow_dir(x, y)
+                inflows_arr[index] = router.inflows_from_flow_dir(x, y)
+                n_waterbodies[index], is_headwater[index] = router.n_waterbodies_from_inflows(x, y, outflow_arr[index], inflows_arr[index])
+                # waterbody_code[index] = router.generate_waterbody_code(x,
+                #                                                        y,
+                #                                                        outflow_arr[index],
+                #                                                        inflows_arr[index],
+                #                                                        self.saved_vars['is_estuary'][index],
+                #                                                        is_headwater[index])
+        
+        # Create NetCDF vars for these arrays. Firstly, outflow
+        nc_var = self.nc.createVariable('outflow', np.dtype('i2'), ('y', 'x', 'd'))
+        nc_var.long_name = 'index of grid cell outflow'
+        nc_var.units = ''
+        nc_var.grid_mapping = 'crs'
+        nc_var[:] = outflow_arr
+        # Inflows
+        nc_var = self.nc.createVariable('inflows', np.dtype('i2'), ('y', 'x', 'w', 'd'))
+        nc_var.long_name = 'indices of grid cell inflows'
+        nc_var.units = ''
+        nc_var.grid_mapping = 'crs'
+        nc_var[:] = inflows_arr
+        # Number of waterbodies per cell
+        nc_var = self.nc.createVariable('n_waterbodies', np.dtype('i2'), ('y', 'x'))
+        nc_var.long_name = 'number of waterbodies in grid cell'
+        nc_var.units = ''
+        nc_var.grid_mapping = 'crs'
+        nc_var[:] = n_waterbodies
+        # Is cell a headwater?
+        nc_var = self.nc.createVariable('is_headwater', np.dtype('i1'), ('y', 'x'))
+        nc_var.long_name = 'is this cell a headwater?'
+        nc_var.units = ''
+        nc_var.grid_mapping = 'crs'
+        nc_var[:] = is_headwater
+         
+
+        # # Set the outflows array for each cell
+        # for index, cell in np.ndenumerate(self.flow_dir):
+        #     y, x = index[0] + 1, index[1] + 1
+        #     if not self.flow_dir.mask[index]:       # Only for non-masked elements
+        #         outflow_arr[index] = self.outflow_from_flow_dir(x, y, cell)[::-1]
+
+        # Use that to set the inflows array to each cell
+        # for j, xy in enumerate(outflow_arr):
+        #     for i, outflow in enumerate(xy):
+        #         if not self.flow_dir.mask[j,i]:
+        #             x_in, y_in = i + 1, j + 1
+        #             l, m = outflow[1] - 1, outflow[0] - 1
+        #             k = inflows_arr[m,l].count(axis=0)          # How many inflow cells already set
+        #             inflows_arr[m,l,k] = [y_in,x_in]
+
+        # Use the number of inflows for each cell to set number of waterbodies
+        # n_waterbodies_arr = inflows_arr.count(axis=2)[:,:,0]
+        # n_waterbodies_arr = np.ma.masked_array(n_waterbodies_arr, mask=self.flow_dir.mask)
+        # max_n_waterbodies_per_cell = n_waterbodies_arr.max()
+        # headwaters = np.ma.array(np.full((*self.flow_dir.shape, 7), False), mask=True)      # Max of seven waterbodies per cell
+        # stream_order = np.ma.array(np.empty((*self.flow_dir.shape, 7), dtype=int), mask=True)
+        # # If number of inflows is zero, it must be a headwater
+        # for index, n_waterbodies in np.ndenumerate(n_waterbodies_arr):
+        #     if not self.flow_dir.mask[index]:
+        #         if n_waterbodies == 0:
+        #             n_waterbodies_arr[index] = 1
+        #             headwaters[index][0] = True
+        #             stream_order[index][0] = 1
+
+        # # Use the number of waterbodies to create an array of inflows to each waterbody
+        # waterbody_inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, max_n_waterbodies_per_cell, 7, 3), dtype=int), mask=True)
+        # # Loop through cell inflows to create this array
+        # for j, xyw in enumerate(inflows_arr):
+        #     for i, cell_inflows in enumerate(xyw):
+        #         if not self.flow_dir.mask[j,i]:         # Only if we're in the model domain
+        #             if not cell_inflows.mask.all():     # Only if the cell has inflows
+        #                 for k, cell_inflow in enumerate(cell_inflows):
+        #                     if not cell_inflow.mask.any():
+        #                         j_in, i_in = cell_inflow[0] - 1, cell_inflow[1] - 1
+        #                         n_waterbodes_inflow = n_waterbodies_arr[j_in, i_in]
+        #                         # Each cell inflow is to one waterbody, and this waterbody receives all the inflows from that cell
+        #                         for w in range(1, n_waterbodes_inflow + 1):
+        #                             waterbody_inflows_arr[j,i,k,w-1] = [*cell_inflow, w]
+
+        # NEXT, set waterbody outflow array
+
 
 
     def outflow_from_flow_dir(self, x, y, flow_dir):
@@ -381,3 +461,42 @@ class Compiler:
             128: [x+1, y-1]
         }
         return xy_out[flow_dir]
+
+    def inflows_from_flow_dir(self, x, y):
+        """Get the inflow cell references given the current cell
+        reference and a flow direction."""
+        j, i = y - 1, x - 1
+
+        # Flow direction that means the cell with indices inflows[j_n-j, i_n-i]
+        # flows into this cell
+        inflow_flow_dir = {
+            (-1, -1): 2,
+            (0, -1): 1,
+            (1, -1): 128,
+            (-1, 0): 4,
+            (0, 0): 0,
+            (1, 0): 64,
+            (-1, 1): 8,
+            (0, 1): 16,
+            (1, 1): 32
+        }
+        inflow_cells = []
+        # Loop through the neighbours and check if they're inflows to this cell
+        for j_n in range(j-1,j+2):
+            for i_n in range(i-1,i+2):
+                if self.in_model_domain(i_n, j_n):
+                    if self.flow_dir[j_n, i_n] == inflow_flow_dir[(j_n-j, i_n-i)]:
+                        inflow_cells.append([j_n+1, i_n+1])
+
+        # Create masked array from the inflow_cells list
+        inflow_cells_ma = np.ma.array(np.ma.empty((7,2), dtype=int), mask=True)
+        if len(inflow_cells) > 0:       # Only fill if there are inflows
+            inflow_cells_ma[0:len(inflow_cells)] = inflow_cells
+        return inflow_cells_ma
+
+    def in_model_domain(self, i, j):
+        """Check if index [j,i] is in model domain."""
+        i_in_domain = i >= 0 and i < self.grid_mask.shape[1]
+        j_in_domain = j >= 0 and j < self.grid_mask.shape[0]
+        not_masked = self.flow_dir[j, i] is not np.ma.masked if (i_in_domain and j_in_domain) else False
+        return i_in_domain and j_in_domain and not_masked
