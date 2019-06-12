@@ -69,4 +69,4 @@ is_estuary:
   long_name: is waterbody in this cell an estuary
   to_units: ''
   dims: ['y', 'x']
-  vartype: uint8
+  vartype: i1

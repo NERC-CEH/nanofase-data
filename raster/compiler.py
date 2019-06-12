@@ -106,9 +106,25 @@ class Compiler:
         y.standard_name = 'projection_y_coordinate'
         y.axis = 'Y'
         y[:] = [self.grid.bounds.top - i * self.grid.res[1] - 0.5 * self.grid.res[1] for i in range(self.grid.height)]
-        # Grid dimension (2D) and max number of waterbodies per cell
+        # Grid dimension (2D), max number of waterbodies per cell and grid bounds
         d_dim = self.nc.createDimension('d', 2)
         w_dim = self.nc.createDimension('w', 7)
+        box_dim = self.nc.createDimension('box', 4)
+        # Grid properties - shape
+        grid_shape = self.nc.createVariable('grid_shape', 'i4', ('d',))
+        grid_shape.units = ''
+        grid_shape.long_name = 'number of grid cells along each (x,y) grid axis'
+        grid_shape[:] = self.grid.shape
+        # Grid resolution
+        grid_res = self.nc.createVariable('grid_res', 'f4', ('d',))
+        grid_res.units = ''
+        grid_res.long_name = 'number of grid cells along each grid axis'
+        grid_res[:] = self.grid.res
+        # Grid bounds
+        grid_bounds = self.nc.createVariable('grid_bounds', 'f4', ('box',))
+        grid_bounds.units = ''
+        grid_bounds.long_name = 'bounding box of the grid'
+        grid_bounds[:] = self.grid.bounds
         # Add the flow direction
         self.flow_dir = self.grid.read(1, masked=True)              # Get the flow direction array from the raster
         self.grid_mask = np.ma.getmask(self.flow_dir)               # Use the extent of the flow direction array to create a mask for all other data
@@ -357,7 +373,7 @@ class Compiler:
         inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, 7, 2), dtype=np.dtype('i2')), mask=True)      # Max of seven inflows
         n_waterbodies = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype('i2')), mask=True)
         is_headwater = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype('i1')), mask=True)
-        waterbody_code = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype(('U', 70))), mask=True)
+        # waterbody_code = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype(('U', 70))), mask=True)
 
         # Use the flow direction to set outflow and inflows to each cell
         for index, cell in np.ndenumerate(self.flow_dir):
