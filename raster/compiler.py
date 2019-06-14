@@ -9,8 +9,10 @@ from rasterio.warp import reproject, Resampling
 from shapely.geometry import box
 import yaml
 from pint import UnitRegistry
-import sys
+import os
 from router import Router
+
+import sys
 
 class Compiler:
 
@@ -49,6 +51,8 @@ class Compiler:
         self.ureg = UnitRegistry()
         # Define the timestep as a unit, based on that given in config file
         self.ureg.define('timestep = {0} * second'.format(self.config['time']['dt']))
+        # Was a root directory specified?
+        self.root_dir = self.config['root_dir'] if 'root_dir' in self.config else ''
         # Create empty dict ready to save vars to memory
         self.saved_vars = {}
     
@@ -58,7 +62,7 @@ class Compiler:
         variables based on this. This step must be performed before NetCDF file is generated."""
 
         if self.config['flow_dir']['type'] == 'raster':
-            self.grid = rasterio.open(self.config['flow_dir']['path'])
+            self.grid = rasterio.open(os.path.join(self.root_dir, self.config['flow_dir']['path']))
             # If a CRS has been specified for the flowdir raster, use this instead of the raster's
             # internal CRS. This is useful if a raster has an ill-defined CRS
             self.grid_crs = CRS.from_user_input(self.config['flow_dir']['crs']) if 'crs' in self.config['flow_dir'] else self.grid.crs
@@ -166,7 +170,7 @@ class Compiler:
         if path is None:
             path = var_dict['path']
         # Open the raster and clip to extent of grid (defined by flowdir raster)
-        with rasterio.open(path, 'r') as rs:
+        with rasterio.open(os.path.join(self.root_dir, path), 'r') as rs:
             out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
         values = np.ma.masked_where(self.grid_mask, out_img[0])
         # Should the array be clipped?
@@ -264,7 +268,7 @@ class Compiler:
                 print("Spatiotemporal variable ({0}) in raster format must be provided by one raster file per time step, with path denoted by /{t/}".format(var_name))
            
         elif var_dict['type'] == 'csv':
-            df = pd.read_csv(var_dict['path'], header=0)
+            df = pd.read_csv(os.path.join(self.root_dir, var_dict['path']), header=0)
             # Loop through the timesteps and create pivot table to obtain spatial array for each
             for t in range(1,df['t'].max()+1):
                 df_t = df[df['t'] == t]
@@ -303,7 +307,7 @@ class Compiler:
 
         # Open the supplied land use raster
         # Open the raster and clip to extent of grid (defined by flowdir raster)
-        with rasterio.open(self.vars['land_use']['path'], 'r') as rs:
+        with rasterio.open(os.path.join(self.root_dir, self.vars['land_use']['path']), 'r') as rs:
             out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
             src_arr = out_img[0]
 
