@@ -118,7 +118,7 @@ class Compiler:
         # Grid resolution
         grid_res = self.nc.createVariable('grid_res', 'f4', ('d',))
         grid_res.units = ''
-        grid_res.long_name = 'number of grid cells along each grid axis'
+        grid_res.long_name = 'size of each grid cell'
         grid_res[:] = self.grid.res
         # Grid bounds
         grid_bounds = self.nc.createVariable('grid_bounds', 'f4', ('box',))
@@ -366,7 +366,7 @@ class Compiler:
 
     def routing(self):
         """Use the flow direction to route the waterbody network."""
-        # Create the masked arrays to being with, such that they're masked by the grid mask
+        # Create the empty arrays to begin with a mask ready to be filled
         router = Router(self.flow_dir)              # Set up the router to deal with common routing tasks
         outflow_arr = np.ma.zeros((*self.flow_dir.shape, 2), dtype=np.dtype('i2'))
         outflow_arr.mask = self.grid_mask           # Set the grid mask
