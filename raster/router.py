@@ -21,7 +21,7 @@ class Router:
             64: [x, y-1],
             128: [x+1, y-1]
         }
-        return xy_out[self.flow_dir[y-1, x-1]][::-1]
+        return xy_out[self.flow_dir[y-1, x-1]]
 
 
     def inflows_from_flow_dir(self, x, y):
@@ -47,7 +47,7 @@ class Router:
             for i_n in range(i-1,i+2):
                 if self.in_model_domain(i_n, j_n):
                     if self.flow_dir[j_n, i_n] == inflow_flow_dir[(j_n-j, i_n-i)]:
-                        inflow_cells.append([j_n+1, i_n+1])
+                        inflow_cells.append([i_n+1, j_n+1])
 
         # Create masked array from the inflow_cells list
         inflow_cells_ma = np.ma.array(np.ma.empty((7,2), dtype=int), mask=True)
@@ -67,7 +67,7 @@ class Router:
     def n_waterbodies_from_inflows(self, x, y, outflow, inflows):
         """Calculate the number of waterbodies from the inflows to the cell."""
         j, i = y - 1, x - 1
-        j_out, i_out = outflow[0] - 1, outflow[1] - 1
+        j_out, i_out = outflow[1] - 1, outflow[0] - 1
         n_inflows = inflows.count(axis=0)[0]        # Count the unmasked elements to get n_inflows
         # If there are no inflows but the outflow is to the model domain, it
         # must be a headwater. Else, number of waterbodies is same as number of inflows
