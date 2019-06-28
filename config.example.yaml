@@ -1,19 +1,19 @@
 timesteps: 365
 use_cache: yes
 material: TiO2
-flow_dir_raster: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/flowdir_05000_thames.tif
-runoff: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/raw/hydro/qf_sf.csv
-atmospheric_dry_depo_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/atmospheric/2019-03_malta/drydepo_np/
-atmospheric_wet_depo_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/atmospheric/2019-03_malta/wetdepo_np/
-# sources: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/raw/sources/NanoFASE_TiO2_emissions_to_surface_water_v0_1_20180712.txt
-sources: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/raw/sources/2019-03_thames/NANO_RESULTS_Thames.txt
-sources_areal: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/sources/2019-03_tio2_thames_pristine-only/
-sources_temp: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/raw/sources/2019-03_thames/Temporal_profiles_v1.txt
-soil_texture_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/soil/
-bulk_density: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
-c-factor: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/soil/c-factor_osgb_5000m_qgis.tif
-ls-factor: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/soil/ls-factor_osgb_5000m.tif
-p-factor: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/soil/p-factor_osgb_5000m.tif
-precipitation_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/interim/rainfall/
-tidal_bounds: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data/processed/is-river-an-estuary.tif
+flow_dir_raster: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/flowdir_05000_thames.tif
+runoff: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/hydro/qf_sf.csv
+atmospheric_dry_depo_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/atmospheric/2019-03_malta/drydepo_np/
+atmospheric_wet_depo_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/atmospheric/2019-03_malta/wetdepo_np/
+# sources: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/NanoFASE_TiO2_emissions_to_surface_water_v0_1_20180712.txt
+sources: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/2019-03_thames/NANO_RESULTS_Thames.txt
+sources_areal: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/sources/2019-03_tio2_thames_pristine-only/
+sources_temp: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/2019-03_thames/Temporal_profiles_v1.txt
+soil_texture_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/
+bulk_density: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
+c-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/c-factor_osgb_5000m_qgis.tif
+ls-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/ls-factor_osgb_5000m.tif
+p-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/p-factor_osgb_5000m.tif
+precipitation_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/rainfall/
+tidal_bounds: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/is-river-an-estuary.tif
 output_file: data.json

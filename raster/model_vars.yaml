@@ -71,3 +71,70 @@ is_estuary:
   dims: ['y', 'x']
   vartype: u1
   clip: [None, 100]
+emissions_areal_soil_pristine:
+  long_name: mass flux of pristine nanomaterial into soil
+  to_units: 'kg m**-2 s**-1'
+  dims: ['y', 'x']
+emissions_areal_soil_transformed:
+  long_name: mass flux of transformed nanomaterial into soil
+  to_units: 'kg m**-2 s**-1'
+  dims: ['y', 'x']
+emissions_areal_soil_dissolved:
+  long_name: mass flux of dissolved nanomaterial into soil
+  to_units: 'kg m**-2 s**-1'
+  dims: ['y', 'x']
+emissions_areal_water_pristine:
+  long_name: mass flux of pristine nanomaterial into surface waters
+  to_units: 'kg m**-2 s**-1'
+  dims: ['y', 'x']
+emissions_areal_water_transformed:
+  long_name: mass flux of transformed nanomaterial into surface waters
+  to_units: 'kg m**-2 s**-1'
+  dims: ['y', 'x']
+emissions_areal_water_dissolved:
+  long_name: mass flux of dissolved nanomaterial into surface waters
+  to_units: 'kg m**-2 s**-1'
+  dims: ['y', 'x']
+
+# TODO Point sources:
+# This script will convert shapefiles into NetCDF by the following convention:
+# var[x][y][p][d], where
+#   - [x][y] are the normal grid,
+#   - [p] are the number of point sources in a cell
+#   - [d] is the (val, lat, lon) values of the point source, the lat/lon being needed
+#     to pass to the correct reach
+
+emissions_point_water_pristine:
+  long_name: mass transport of pristine nanomaterial into surface waters from point source
+  to_units: 'kg s**-1'
+  dims: ['d', 'p', 'y', 'x']
+emissions_point_water_transformed:
+  long_name: mass transport of pristine nanomaterial into surface waters from point source
+  to_units: 'kg s**-1'
+  dims: ['d', 'p', 'y', 'x']
+emissions_point_water_dissolved:
+  long_name: mass transport of pristine nanomaterial into surface waters from point source
+  to_units: 'kg s**-1'
+  dims: ['d', 'p', 'y', 'x']
+
+
+# emissions_atmospheric_drydepo_pristine:
+#   standard_name: tendency_of_atmosphere_mass_content_due_to_dry_deposition
+#   long_name: tendency of atmosphere mass content of pristine nanomaterial due to dry deposition
+#   to_units: 'kg m**-2 s**-1'
+#   dims: ['t', 'y', 'x']
+# emissions_atmospheric_drydepo_transformed:
+#   standard_name: tendency_of_atmosphere_mass_content_due_to_dry_deposition
+#   long_name: tendency of atmosphere mass content of transformed nanomaterial due to dry deposition
+#   to_units: 'kg m**-2 s**-1'
+#   dims: ['t', 'y', 'x']
+# emissions_atmospheric_wetdepo_pristine:
+#   standard_name: tendency_of_atmosphere_mass_content_due_to_wet_deposition
+#   long_name: tendency of atmosphere mass content of pristine nanomaterial due to wet deposition
+#   to_units: 'kg m**-2 s**-1'
+#   dims: ['t', 'y', 'x']
+# emissions_atmospheric_wetdepo_transformed:
+#   standard_name: tendency_of_atmosphere_mass_content_due_to_wet_deposition
+#   long_name: tendency of atmosphere mass content of transformed nanomaterial due to dry deposition
+#   to_units: 'kg m**-2 s**-1'
+#   dims: ['t', 'y', 'x']
