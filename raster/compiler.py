@@ -173,8 +173,6 @@ class Compiler:
         with rasterio.open(os.path.join(self.root_dir, path), 'r') as rs:
             out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
         values = np.ma.masked_where(self.grid_mask, out_img[0])
-        if var_name == 'is_estuary':
-            print(out_img.dtype)
         # Should the array be clipped?
         if 'clip' in var_dict:
             try:
@@ -211,11 +209,6 @@ class Compiler:
             values = self.parse_raster(var_name, (from_units, to_units))
             # Fill the NetCDF variable with the clipped raster (without the units)
             nc_var[:] = values.magnitude
-            if var_name == 'is_estuary':
-                print(values.magnitude.dtype)
-                print(nc_var)
-                print(nc_var[:])
-                print(nc_var[:].max())
             if save:
                 self.saved_vars[var_name] = values.magnitude
         elif var_dict['type'] == 'csv':
