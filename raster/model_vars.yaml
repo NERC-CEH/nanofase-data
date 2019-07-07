@@ -73,27 +73,27 @@ is_estuary:
   clip: [None, 100]
 emissions_areal_soil_pristine:
   long_name: mass flux of pristine nanomaterial into soil
-  to_units: 'kg m**-2 s**-1'
+  to_units: kg/m**2/s
   dims: ['y', 'x']
 emissions_areal_soil_transformed:
   long_name: mass flux of transformed nanomaterial into soil
-  to_units: 'kg m**-2 s**-1'
+  to_units: kg/m**2/s
   dims: ['y', 'x']
 emissions_areal_soil_dissolved:
   long_name: mass flux of dissolved nanomaterial into soil
-  to_units: 'kg m**-2 s**-1'
+  to_units: kg/m**2/s
   dims: ['y', 'x']
 emissions_areal_water_pristine:
   long_name: mass flux of pristine nanomaterial into surface waters
-  to_units: 'kg m**-2 s**-1'
+  to_units: kg/m**2/s
   dims: ['y', 'x']
 emissions_areal_water_transformed:
   long_name: mass flux of transformed nanomaterial into surface waters
-  to_units: 'kg m**-2 s**-1'
+  to_units: kg/m**2/s
   dims: ['y', 'x']
 emissions_areal_water_dissolved:
   long_name: mass flux of dissolved nanomaterial into surface waters
-  to_units: 'kg m**-2 s**-1'
+  to_units: kg/m**2/s
   dims: ['y', 'x']
 
 # TODO Point sources:
@@ -106,16 +106,16 @@ emissions_areal_water_dissolved:
 
 emissions_point_water_pristine:
   long_name: mass transport of pristine nanomaterial into surface waters from point source
-  to_units: 'kg s**-1'
-  dims: ['d', 'p', 'y', 'x']
+  to_units: kg s**-1
+  dims: ['p', 'y', 'x']
 emissions_point_water_transformed:
   long_name: mass transport of pristine nanomaterial into surface waters from point source
-  to_units: 'kg s**-1'
-  dims: ['d', 'p', 'y', 'x']
+  to_units: kg s**-1
+  dims: ['p', 'y', 'x']
 emissions_point_water_dissolved:
   long_name: mass transport of pristine nanomaterial into surface waters from point source
-  to_units: 'kg s**-1'
-  dims: ['d', 'p', 'y', 'x']
+  to_units: kg s**-1
+  dims: ['p', 'y', 'x']
 
 
 # emissions_atmospheric_drydepo_pristine:

@@ -1,0 +1,85 @@
+output_file: data.nc
+root_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data
+time:
+  n: 365
+  dt: 86400
+  start_date: 2015-01-01
+flow_dir:
+  type: raster
+  path: interim/flowdir_05000_thames.tif
+  crs: EPSG:27700
+runoff:
+  type: csv
+  path: processed/model-preprocessed/runoff.csv
+  units: mm/day
+precip:
+  type: raster
+  path: interim/rainfall/rainfall_5km_2015-{t}.tif
+  units: mm/day
+  t_min: 1
+  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2015 - Great Britain. Resampled to 5 km resolution.
+  references: Tanguy, M., Prosdocimi, I., Keller, V.D.J., Terry, J., Cole, S.J., Morris, D.G., Dixon, H. (2014). Consolidation of a CEH reference rainfall dataset for hydrological purposes for the UK. CEH-Wallingford, Oxfordshire, UK.
+soil_bulk_density:
+  type: raster
+  units: t/m**3
+  path: interim/soil/bulk-density_osgb_5km.tif
+  source: European Soil Data Centre topsoil physical properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/topsoil-physical-properties-europe-based-lucas-topsoil-data.
+soil_water_content_field_capacity:
+  type: raster
+  path: processed/model-preprocessed/soil_wc-fc.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe.
+soil_water_content_saturation:
+  type: raster
+  path: processed/model-preprocessed/soil_wc-sat.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
+soil_hydraulic_conductivity:
+  type: raster
+  units: cm/day
+  path: processed/model-preprocessed/soil_ks.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
+soil_texture_sand_content:
+  type: raster
+  path: processed/model-preprocessed/sand-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_clay_content:
+  type: raster
+  path: processed/model-preprocessed/clay-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_silt_content:
+  type: raster
+  path: processed/model-preprocessed/silt-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_coarse_frag_content:
+  type: raster
+  path: processed/model-preprocessed/coarse-frag-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+land_use:
+  type: raster
+  path: processed/model-preprocessed/land-use.tif
+is_estuary:
+  type: raster
+  path: processed/grid/is-river-an-estuary.tif
+emissions_areal_soil_pristine:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_pristine_2015.tif
+  units: kg/m2/yr
+emissions_areal_soil_transformed:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_transformed_2015.tif
+  units: kg/m2/yr
+emissions_areal_soil_dissolved:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_dissolved_2015.tif
+  units: kg/m2/yr
+emissions_areal_water_pristine:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_pristine_2015.tif
+  units: kg/m2/yr
+emissions_areal_water_transformed:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_transformed_2015.tif
+  units: kg/m2/yr
+emissions_areal_water_dissolved:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_dissolved_2015.tif
+  units: kg/m2/yr

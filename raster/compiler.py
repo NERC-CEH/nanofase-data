@@ -1,7 +1,9 @@
+import math
 import netCDF4
 from netCDF4 import Dataset
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import rasterio
 from rasterio.crs import CRS
 from rasterio.mask import mask
@@ -31,12 +33,16 @@ class Compiler:
         for k, v in self.config.items():
             if k in self.vars:
                 self.vars[k].update(v)
+        # If path not in vars dict, then we can't do anything, so remove. This is likely because
+        # it didn't appear in config.yaml.
+        self.vars = { k : v for k, v in self.vars.items() if 'path' in v }
         # Add the separate land use category convertor array
         self.vars['land_use']['cat_conv_dict'] = self.land_use_config
         # Get a list of constants, spatial and spatiotemporal variables
         self.vars_constant = []
         self.vars_spatial = []
         self.vars_spatial_1d = []
+        self.vars_spatial_point = []
         self.vars_spatiotemporal = []
         for k, v in self.vars.items():
             if ('dims' not in v) or (v['dims'] == None):
@@ -45,6 +51,8 @@ class Compiler:
                 self.vars_spatial.append(k)
             elif ('dims' in v) and (v['dims'] == ['t', 'y', 'x']):
                 self.vars_spatiotemporal.append(k)
+            elif ('dims' in v) and (v['dims'] == ['p', 'y', 'x']):
+                self.vars_spatial_point.append(k)
             elif ('dims' in v) and (all(x in v['dims'] for x in ['y', 'x'])) and (len(v['dims']) == 3):
                 self.vars_spatial_1d.append(k)
         # Setup the unit registry
@@ -114,6 +122,7 @@ class Compiler:
         d_dim = self.nc.createDimension('d', 2)
         w_dim = self.nc.createDimension('w', 7)
         box_dim = self.nc.createDimension('box', 4)
+        p_dim = self.nc.createDimension('p')
         # Grid properties - shape
         grid_shape = self.nc.createVariable('grid_shape', 'i4', ('d',))
         grid_shape.units = ''
@@ -137,7 +146,7 @@ class Compiler:
         nc_var[:] = self.flow_dir
 
 
-    def setup_netcdf_var(self, var_name, extra_dims=None):
+    def setup_netcdf_var(self, var_name, extra_dims=None, coords_sidecar=False):
         var_dict = self.vars[var_name]
         fill_value = float(var_dict['fill_value']) if 'fill_value' in var_dict else None
         dims = tuple(var_dict['dims']) if 'dims' in var_dict else ()
@@ -161,7 +170,15 @@ class Compiler:
             nc_var.references = var_dict['references']
         nc_var.units = var_dict['to_units']
         nc_var.grid_mapping = 'crs'
-        return nc_var
+        # Should we be adding a coordinate sidebar variable (e.g. for point sources)?
+        if coords_sidecar:
+            nc_var_coords = self.nc.createVariable("{0}_coords".format(var_name), np.float32, ('d', *dims))
+            nc_var_coords.long_name = 'Exact coordinates for values in {0}'.format(var_name)
+            nc_var.units = 'm'
+            nc_var.grid_mapping = 'crs'
+            return nc_var, nc_var_coords
+        else:
+            return nc_var
 
 
     def parse_raster(self, var_name, units, path=None):
@@ -197,7 +214,7 @@ class Compiler:
         nc_var = self.setup_netcdf_var(var_name)
         var_dict = self.vars[var_name]
 
-         # Check if we're converting units
+        # Check if we're converting units
         from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
         to_units = self.ureg(var_dict['to_units'])
         if from_units != to_units:
@@ -218,6 +235,32 @@ class Compiler:
             print("Unrecognised file type {0} for variable {1}. Type should be raster, csv or nc.".format(var_dict['type'], var_name))
 
 
+    def parse_spatial_point_var(self, var_name):
+        # Get the var dict, but don't create the NetCDF var yet as we need to parse data before
+        # we know the max length of the points per cell dimension
+        var_dict = self.vars[var_name]
+
+        # Check if we're converting units
+        from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
+        to_units = self.ureg(var_dict['to_units'])
+        if from_units != to_units:
+            print('\t\t...converting {0.units:~P} to {1.units:~P}'.format(from_units, to_units))
+
+        # Is the data in shapefile format (the only supported format for the time being)?
+        if var_dict['type'] == 'shapefile':
+            # Parse the Shapefile
+            values, coords = self.parse_shapefile(var_name, (from_units, to_units))
+            nc_var, nc_var_coords = self.setup_netcdf_var(var_name, coords_sidecar=True)
+            nc_var[:,:,:] = values.magnitude
+            nc_var_coords[:,:,:,:] = coords
+        # TODO what to do about temporal point sources?
+        elif var_dict['type'] == 'csv':
+            # TODO
+            print("Sorry, only raster spatial variables supported at the moment. Variable: {0}.".format(var_name))
+        else: 
+            print("Unrecognised file type {0} for variable {1}. Type should be raster, csv or nc.".format(var_dict['type'], var_name))
+
+
     def parse_spatial_1d_var(self, var_name):
         var_dict = self.vars[var_name]
         record_dim = [d for d in var_dict['dims'] if d not in ['x', 'y']][0]    # Get the dim that isn't x or y
@@ -228,7 +271,6 @@ class Compiler:
             self.parse_land_use(record_dim)
         else:
             nc_var = self.setup_netcdf_var(var_name)
-
             from_units = self.ureg(var_dict['units'] if 'units' in var_dict else var_dict['to_units'])
             to_units = self.ureg(var_dict['to_units'])
             if from_units != to_units:
@@ -239,9 +281,10 @@ class Compiler:
                 if '{' + record_dim + '}' in var_dict['path']:
                     print("Sorry, record dimension of spatial 1d variables must be given as separate bands, for the moment.")
                 else:
-                    print("one band per record dim")
+                    print("One band per record dim")
             else:
                 print("Unrecognised file type {0} for variable {1}. Type should be raster for 1d spatial variables.".format(config[var]['type'], var))
+
 
     def parse_spatiotemporal_var(self, var_name):
         nc_var = self.setup_netcdf_var(var_name)
@@ -297,6 +340,48 @@ class Compiler:
                 nc_var[t-1,:,:] = values.magnitude
         else:
             print("Unrecognised file type {0} for variable {1}. Type should be raster or csv.".format(config[var]['type'], var))
+
+
+    def parse_shapefile(self, var_name, units):
+        """Parse a shapefile of point values into the model grid, with dimensions ['p', 'y', 'x'],
+        where [p] is each point in the grid cell (x,y). A second array describing the location of
+        each of these points with the same dimensions (plus [d] as they're coordinates) will also
+        be created."""
+        var_dict = self.vars[var_name]
+        gdf = gpd.read_file(os.path.join(self.root_dir, self.vars[var_name]['path']))
+        # Create empty values array and set a maximum of 100 point sources
+        values = np.ma.array(np.ma.empty((10, *self.flow_dir.shape), dtype=np.float64), mask=True)
+        coords = np.ma.array(np.ma.empty((2, 10, *self.flow_dir.shape), dtype=np.float32), mask=True)
+        # Loop through GeoDataFrame and fill values array
+        for index, point in gdf.iterrows():
+            if self.in_model_domain(point['geometry']):
+                # Get the indices of the cell this point is in
+                i = int(((int(point['geometry'].x) - int(point['geometry'].x) % self.grid.res[0]) - self.grid.bounds.left) / self.grid.res[0])
+                j = int((self.grid.bounds.top - (int(point['geometry'].y) - int(point['geometry'].y) % self.grid.res[1])) / self.grid.res[1])
+                # Find the next point element that isn't masked
+                p = 0
+                while values[p,j,i] is not np.ma.masked:
+                    p = p + 1
+                    if p >= values.shape[1]:
+                        print("Maximum of {0} point sources allowed per cell, but cell {1},{2} (x,y zero-indexed) has more than that.".format(values.shape[1], i, j))
+                        sys.exit()
+                values[p,j,i] = point['emission']
+                coords[:,p,j,i] = [point['geometry'].x, point['geometry'].y]
+
+        # Shrink to the max number of points
+        max_points_per_cell = values.count(axis=0).max()
+        values = np.ma.array(values[:max_points_per_cell.max(),:,:])
+        coords = np.ma.array(coords[:,:max_points_per_cell. max(),:,:])
+        
+        # Clip the array to the grid mask. The broadcast_to function "broadcasts" the grid_mask as being the correct rank.
+        # See here: https://stackoverflow.com/questions/37682284/mask-a-3d-array-with-a-2d-mask-in-numpy
+        values = np.ma.masked_where(np.broadcast_to(self.grid_mask, values.shape), values)
+        coords = np.ma.masked_where(np.broadcast_to(self.grid_mask, coords.shape), coords)
+        # Convert the units
+        values = units[0] * values
+        values.ito(units[1])
+        
+        return values, coords
 
 
     def parse_land_use(self, cat_dim):
@@ -420,6 +505,14 @@ class Compiler:
         nc_var.units = ''
         nc_var.grid_mapping = 'crs'
         nc_var[:] = is_headwater
+
+
+    def in_model_domain(self, point):
+        """Check if a point is in the model domain."""
+        if (point.x >= self.grid.bounds.left) and (point.x < self.grid.bounds.right) and (point.y > self.grid.bounds.bottom) and (point.y <= self.grid.bounds.top):
+            return True
+        else:
+            return False
          
 
         # # Set the outflows array for each cell

@@ -4,6 +4,7 @@ channels:
 dependencies:
   - numpy
   - pandas
+  - geopandas
   - rasterio
   - pyyaml
   - netCDF4
