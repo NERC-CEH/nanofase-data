@@ -1,5 +1,6 @@
 output_file: data.nc
-root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/
+root_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data
+iso3: GBR
 time:
   n: 365
   dt: 86400
@@ -59,3 +60,44 @@ land_use:
 is_estuary:
   type: raster
   path: processed/grid/is-river-an-estuary.tif
+emissions_areal_soil_pristine:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_pristine_2015.tif
+  units: kg/m**2/year
+emissions_areal_soil_transformed:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_transformed_2015.tif
+  units: kg/m**2/year
+emissions_areal_water_pristine:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_pristine_2015.tif
+  units: kg/m**2/year
+emissions_areal_water_transformed:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_transformed_2015.tif
+  units: kg/m**2/year
+emissions_point_water_pristine:
+  type: shapefile
+  value_var: emission
+  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_pristine_2015/point_sources_water_pristine_2015_osgb.shp
+  temporal_profile:
+    path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
+    apply_where: Emission_source_type = P2
+    factor_col: Factor
+  units: kg/year
+emissions_point_water_transformed:
+  type: shapefile
+  value_var: emission
+  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_transformed_2015/point_sources_water_transformed_2015_osgb.shp
+  temporal_profile:
+    path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
+    apply_where: Emission_source_type = P2
+    factor_col: Factor
+  units: kg/year
+emissions_temporal_profile:
+  type: csv
+  sep: ;
+  factor_var: Factor
+  apply_where:
+    - emissions_point_water_pristine.profile == Emission_source_type
+    - emissions_point_water_transformed.temporal == Emission_source_type

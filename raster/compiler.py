@@ -51,7 +51,7 @@ class Compiler:
                 self.vars_spatial.append(k)
             elif ('dims' in v) and (v['dims'] == ['t', 'y', 'x']):
                 self.vars_spatiotemporal.append(k)
-            elif ('dims' in v) and (v['dims'] == ['p', 'y', 'x']):
+            elif ('dims' in v) and (v['dims'] == ['p', 't', 'y', 'x']):
                 self.vars_spatial_point.append(k)
             elif ('dims' in v) and (all(x in v['dims'] for x in ['y', 'x'])) and (len(v['dims']) == 3):
                 self.vars_spatial_1d.append(k)
@@ -172,7 +172,7 @@ class Compiler:
         nc_var.grid_mapping = 'crs'
         # Should we be adding a coordinate sidebar variable (e.g. for point sources)?
         if coords_sidecar:
-            nc_var_coords = self.nc.createVariable("{0}_coords".format(var_name), np.float32, ('d', *dims))
+            nc_var_coords = self.nc.createVariable("{0}_coords".format(var_name), np.float32, ('d', 'p', 'x', 'y'))
             nc_var_coords.long_name = 'Exact coordinates for values in {0}'.format(var_name)
             nc_var.units = 'm'
             nc_var.grid_mapping = 'crs'
@@ -251,7 +251,7 @@ class Compiler:
             # Parse the Shapefile
             values, coords = self.parse_shapefile(var_name, (from_units, to_units))
             nc_var, nc_var_coords = self.setup_netcdf_var(var_name, coords_sidecar=True)
-            nc_var[:,:,:] = values.magnitude
+            nc_var[:,:,:,:] = values.magnitude
             nc_var_coords[:,:,:,:] = coords
         # TODO what to do about temporal point sources?
         elif var_dict['type'] == 'csv':
@@ -348,9 +348,23 @@ class Compiler:
         each of these points with the same dimensions (plus [d] as they're coordinates) will also
         be created."""
         var_dict = self.vars[var_name]
+
+        # Check if we have a temporal profile
+        if 'temporal_profile' in var_dict:
+            # Load the temporal profile CSV and create list of temporal factors. These are interpolated
+            # if the time step is not 1 day (the temporal factor time step)
+            df = pd.read_csv(os.path.join(self.root_dir, var_dict['temporal_profile']['path']), header=0, sep=';')
+            df = df[(df['ISO3'] == self.config['iso3'].upper()) & (df[var_dict['temporal_profile']['source_type_col']] == var_dict['temporal_profile']['for_source_type'])]
+            temporal_factors_data = df[var_dict['temporal_profile']['factor_col']].tolist()
+            # Do the interpolation
+            temporal_factors = np.interp(
+                np.arange(0, int(self.config['time']['n']) * int(self.config['time']['dt']), int(self.config['time']['dt'])),   # The desired x temporal res
+                np.arange(0, 86400 * len(temporal_factors_data), 86400),                                                        # The given x temporal res (presuming daily)
+                temporal_factors_data,                                                                                          # The provided temporal factors
+            )
         gdf = gpd.read_file(os.path.join(self.root_dir, self.vars[var_name]['path']))
         # Create empty values array and set a maximum of 100 point sources
-        values = np.ma.array(np.ma.empty((10, *self.flow_dir.shape), dtype=np.float64), mask=True)
+        values = np.ma.array(np.ma.empty((10, int(self.config['time']['n']), *self.flow_dir.shape), dtype=np.float64), mask=True)
         coords = np.ma.array(np.ma.empty((2, 10, *self.flow_dir.shape), dtype=np.float32), mask=True)
         # Loop through GeoDataFrame and fill values array
         for index, point in gdf.iterrows():
@@ -360,18 +374,23 @@ class Compiler:
                 j = int((self.grid.bounds.top - (int(point['geometry'].y) - int(point['geometry'].y) % self.grid.res[1])) / self.grid.res[1])
                 # Find the next point element that isn't masked
                 p = 0
-                while values[p,j,i] is not np.ma.masked:
+                while values[p,0,j,i] is not np.ma.masked:
                     p = p + 1
                     if p >= values.shape[1]:
                         print("Maximum of {0} point sources allowed per cell, but cell {1},{2} (x,y zero-indexed) has more than that.".format(values.shape[1], i, j))
                         sys.exit()
-                values[p,j,i] = point['emission']
+                # Which temporal profile should be applied?
+                if point[var_dict['source_type_col']] == var_dict['temporal_profile']['for_source_type']:
+                    point_values = point['emission'] * temporal_factors
+                else:
+                    point_values = [point['emission']] * int(self.config['time']['n'])
+                values[p,:,j,i] = point_values
                 coords[:,p,j,i] = [point['geometry'].x, point['geometry'].y]
 
         # Shrink to the max number of points
         max_points_per_cell = values.count(axis=0).max()
-        values = np.ma.array(values[:max_points_per_cell.max(),:,:])
-        coords = np.ma.array(coords[:,:max_points_per_cell. max(),:,:])
+        values = np.ma.array(values[:max_points_per_cell.max(),:,:,:])
+        coords = np.ma.array(coords[:,:max_points_per_cell.max(),:,:])
         
         # Clip the array to the grid mask. The broadcast_to function "broadcasts" the grid_mask as being the correct rank.
         # See here: https://stackoverflow.com/questions/37682284/mask-a-3d-array-with-a-2d-mask-in-numpy

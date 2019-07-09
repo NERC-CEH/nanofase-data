@@ -107,15 +107,15 @@ emissions_areal_water_dissolved:
 emissions_point_water_pristine:
   long_name: mass transport of pristine nanomaterial into surface waters from point source
   to_units: kg s**-1
-  dims: ['p', 'y', 'x']
+  dims: ['p', 't', 'y', 'x']
 emissions_point_water_transformed:
   long_name: mass transport of pristine nanomaterial into surface waters from point source
   to_units: kg s**-1
-  dims: ['p', 'y', 'x']
+  dims: ['p', 't', 'y', 'x']
 emissions_point_water_dissolved:
   long_name: mass transport of pristine nanomaterial into surface waters from point source
   to_units: kg s**-1
-  dims: ['p', 'y', 'x']
+  dims: ['p', 't', 'y', 'x']
 
 
 # emissions_atmospheric_drydepo_pristine:
