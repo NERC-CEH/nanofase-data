@@ -9,8 +9,9 @@ from rasterio.crs import CRS
 from rasterio.mask import mask
 from rasterio.warp import reproject, Resampling
 from shapely.geometry import box
-import yaml
+from ruamel.yaml import YAML
 from pint import UnitRegistry
+import f90nml
 import os
 from router import Router
 
@@ -18,17 +19,19 @@ import sys
 
 class Compiler:
 
-    def __init__(self, config_path, model_vars_path, land_use_config_path):
+    def __init__(self, config_path, model_vars_path, land_use_config_path, constants_path):
         """Initialise the compiler by reading the config and model_var files,
         combining these and generating list of vars according to dimensionality.
         Also set up the unit registry and define 'timestep' as a unit."""
-        with open(config_path, 'r') as config_file, open(model_vars_path, 'r') as model_vars_file, open(land_use_config_path, 'r') as land_use_config_file:
-            try:
-                self.config = yaml.load(config_file, Loader=yaml.BaseLoader)
-                self.vars = yaml.load(model_vars_file, Loader=yaml.BaseLoader)
-                self.land_use_config = yaml.load(land_use_config_file, Loader=yaml.BaseLoader)
-            except yaml.YAMLError as e:
-                print(e)
+        yaml = YAML(typ='safe')
+        with open(config_path, 'r') as config_file, \
+            open(model_vars_path, 'r') as model_vars_file, \
+            open(land_use_config_path, 'r') as land_use_config_file, \
+            open(constants_path, 'r') as constants_file:
+            self.config = yaml.load(config_file)
+            self.vars = yaml.load(model_vars_file)
+            self.land_use_config = yaml.load(land_use_config_file)
+            self.constants = yaml.load(constants_file)
         # Combine config and model_vars
         for k, v in self.config.items():
             if k in self.vars:
@@ -39,15 +42,12 @@ class Compiler:
         # Add the separate land use category convertor array
         self.vars['land_use']['cat_conv_dict'] = self.land_use_config
         # Get a list of constants, spatial and spatiotemporal variables
-        self.vars_constant = []
         self.vars_spatial = []
         self.vars_spatial_1d = []
         self.vars_spatial_point = []
         self.vars_spatiotemporal = []
         for k, v in self.vars.items():
-            if ('dims' not in v) or (v['dims'] == None):
-                self.vars_constant.append(k)
-            elif ('dims' in v) and (v['dims'] == ['y', 'x']):
+            if ('dims' in v) and (v['dims'] == ['y', 'x']):
                 self.vars_spatial.append(k)
             elif ('dims' in v) and (v['dims'] == ['t', 'y', 'x']):
                 self.vars_spatiotemporal.append(k)
@@ -179,6 +179,18 @@ class Compiler:
             return nc_var, nc_var_coords
         else:
             return nc_var
+
+
+    def parse_constants(self):
+        """Turn the constant YAML file into a Fortran namelist file."""
+        with open('constants.nml','w') as nml_file:
+            allocatable_array_sizes = {}
+            for grp in self.constants.values():
+                for k, v in grp.items():
+                    if isinstance(v, list):
+                        allocatable_array_sizes['n_{0}'.format(k)] = len(v)
+            f90nml.write({'allocatable_array_sizes' : allocatable_array_sizes}, nml_file)
+            f90nml.write(self.constants, nml_file)
 
 
     def parse_raster(self, var_name, units, path=None):

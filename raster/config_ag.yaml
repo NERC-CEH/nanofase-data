@@ -62,24 +62,24 @@ is_estuary:
 emissions_areal_soil_pristine:
   type: raster
   path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_pristine_2015.tif
-  units: kg/m2/yr
+  units: kg/m**2/yr
 emissions_areal_soil_transformed:
   type: raster
   path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_transformed_2015.tif
-  units: kg/m2/yr
+  units: kg/m**2/yr
 emissions_areal_soil_dissolved:
   type: raster
   path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_dissolved_2015.tif
-  units: kg/m2/yr
+  units: kg/m**2/yr
 emissions_areal_water_pristine:
   type: raster
   path: processed/model-preprocessed/emissions/emissions_areal_ag_water_pristine_2015.tif
-  units: kg/m2/yr
+  units: kg/m**2/yr
 emissions_areal_water_transformed:
   type: raster
   path: processed/model-preprocessed/emissions/emissions_areal_ag_water_transformed_2015.tif
-  units: kg/m2/yr
+  units: kg/m**2/yr
 emissions_areal_water_dissolved:
   type: raster
   path: processed/model-preprocessed/emissions/emissions_areal_ag_water_dissolved_2015.tif
-  units: kg/m2/yr
+  units: kg/m**2/yr

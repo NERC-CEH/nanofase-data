@@ -2,7 +2,7 @@
 """Compiling data sources into NetCDF file for use in NanoFASE model."""
 from compiler import Compiler
 
-compiler = Compiler('config.yaml', 'model_vars.yaml', 'land_use.yaml')
+compiler = Compiler('config.yaml', 'model_vars.yaml', 'land_use.yaml', 'constants.yaml')
 print("Setting up dataset...")
 print('\t...parsing flow_dir')
 compiler.parse_flow_dir()
@@ -14,6 +14,11 @@ print('\t...routing water bodies')
 compiler.routing()
 
 print("Creating variables...")
+
+# Constants
+print('\t...constants')
+compiler.parse_constants()
+
 # Spatial, non-temporal data
 for var in compiler.vars_spatial:
     print('\t...{0}'.format(var))
@@ -33,4 +38,3 @@ for var in compiler.vars_spatial_point:
 for var in compiler.vars_spatiotemporal:
     print('\t...{0}'.format(var))
     compiler.parse_spatiotemporal_var(var)
-
