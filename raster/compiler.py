@@ -172,7 +172,7 @@ class Compiler:
         nc_var.grid_mapping = 'crs'
         # Should we be adding a coordinate sidebar variable (e.g. for point sources)?
         if coords_sidecar:
-            nc_var_coords = self.nc.createVariable("{0}_coords".format(var_name), np.float32, ('d', 'p', 'x', 'y'))
+            nc_var_coords = self.nc.createVariable("{0}_coords".format(var_name), np.float32, ('d', 'p', 'y', 'x'))
             nc_var_coords.long_name = 'Exact coordinates for values in {0}'.format(var_name)
             nc_var.units = 'm'
             nc_var.grid_mapping = 'crs'

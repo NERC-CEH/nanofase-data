@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 """Compiling data sources into NetCDF file for use in NanoFASE model."""
 from compiler import Compiler
+import sys
 
-compiler = Compiler('config.yaml', 'model_vars.yaml', 'land_use.yaml', 'constants.yaml')
+if len(sys.argv) > 1:
+    config_file = sys.argv[1]
+else:
+    config_file = 'config.yaml'
+
+compiler = Compiler(config_file, 'model_vars.yaml', 'land_use.yaml', 'constants.yaml')
 print("Setting up dataset...")
 print('\t...parsing flow_dir')
 compiler.parse_flow_dir()
