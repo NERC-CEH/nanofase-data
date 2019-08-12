@@ -383,7 +383,7 @@ class Compiler:
             if self.in_model_domain(point['geometry']):
                 # Get the indices of the cell this point is in
                 i = int(((int(point['geometry'].x) - int(point['geometry'].x) % self.grid.res[0]) - self.grid.bounds.left) / self.grid.res[0])
-                j = int((self.grid.bounds.top - (int(point['geometry'].y) - int(point['geometry'].y) % self.grid.res[1])) / self.grid.res[1])
+                j = int((self.grid.bounds.top - (int(point['geometry'].y) - int(point['geometry'].y) % self.grid.res[1])) / self.grid.res[1]) - 1
                 # Find the next point element that isn't masked
                 p = 0
                 while values[p,0,j,i] is not np.ma.masked:
