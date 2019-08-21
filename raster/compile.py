@@ -8,7 +8,7 @@ if len(sys.argv) > 1:
 else:
     config_file = 'config.yaml'
 
-compiler = Compiler(config_file, 'model_vars.yaml', 'land_use.yaml', 'constants.yaml')
+compiler = Compiler(config_file, 'model_vars.yaml')
 print("Setting up dataset...")
 print('\t...parsing flow_dir')
 compiler.parse_flow_dir()

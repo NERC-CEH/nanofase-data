@@ -52,6 +52,10 @@ soil_texture_coarse_frag_content:
   long_name: coarse fragment content of soil
   to_units: kg/kg
   dims: ['y', 'x']
+soil_attachment_rate:
+  long_name: rate of attachment of nanomaterial to soil matrix
+  to_units: s**-1
+  dims: ['y', 'x']
 
 # Land use
 land_use:
@@ -83,6 +87,10 @@ emissions_areal_soil_pristine:
   long_name: mass flux of pristine nanomaterial into soil
   to_units: kg/m**2/timestep
   dims: ['y', 'x']
+emissions_areal_soil_matrixembedded:
+  long_name: mass flux of matrix-embedded nanomaterial into soil
+  to_units: kg/m**2/timestep
+  dims: ['y', 'x']
 emissions_areal_soil_transformed:
   long_name: mass flux of transformed nanomaterial into soil
   to_units: kg/m**2/timestep
@@ -93,6 +101,10 @@ emissions_areal_soil_dissolved:
   dims: ['y', 'x']
 emissions_areal_water_pristine:
   long_name: mass flux of pristine nanomaterial into surface waters
+  to_units: kg/m**2/timestep
+  dims: ['y', 'x']
+emissions_areal_water_matrixembedded:
+  long_name: mass flux of matrix-embedded nanomaterial into surface waters
   to_units: kg/m**2/timestep
   dims: ['y', 'x']
 emissions_areal_water_transformed:
@@ -106,15 +118,19 @@ emissions_areal_water_dissolved:
 
 # Emissions - point
 emissions_point_water_pristine:
-  long_name: mass transport of pristine nanomaterial into surface waters from point source
+  long_name: mass transport of pristine nanomaterial into surface waters from point sources
+  to_units: kg/timestep
+  dims: ['p', 't', 'y', 'x']
+emissions_point_water_matrixembedded:
+  long_name: mass transport of matrix-embedded nanomaterial into surface waters from point sources
   to_units: kg/timestep
   dims: ['p', 't', 'y', 'x']
 emissions_point_water_transformed:
-  long_name: mass transport of pristine nanomaterial into surface waters from point source
+  long_name: mass transport of pristine nanomaterial into surface waters from point sources
   to_units: kg/timestep
   dims: ['p', 't', 'y', 'x']
 emissions_point_water_dissolved:
-  long_name: mass transport of pristine nanomaterial into surface waters from point source
+  long_name: mass transport of pristine nanomaterial into surface waters from point sources
   to_units: kg/timestep
   dims: ['p', 't', 'y', 'x']
 
@@ -122,6 +138,11 @@ emissions_point_water_dissolved:
 emissions_atmospheric_drydepo_pristine:
   standard_name: tendency_of_atmosphere_mass_content_due_to_dry_deposition
   long_name: tendency of atmosphere mass content of pristine nanomaterial due to dry deposition
+  to_units: kg/m**2/timestep
+  dims: ['t', 'y', 'x']
+emissions_atmospheric_drydepo_matrixembedded:
+  standard_name: tendency_of_atmosphere_mass_content_due_to_dry_deposition
+  long_name: tendency of atmosphere mass content of matrix-embedded nanomaterial due to dry deposition
   to_units: kg/m**2/timestep
   dims: ['t', 'y', 'x']
 emissions_atmospheric_drydepo_transformed:
@@ -132,6 +153,11 @@ emissions_atmospheric_drydepo_transformed:
 emissions_atmospheric_wetdepo_pristine:
   standard_name: tendency_of_atmosphere_mass_content_due_to_wet_deposition
   long_name: tendency of atmosphere mass content of pristine nanomaterial due to wet deposition
+  to_units: kg/m**2/timestep
+  dims: ['t', 'y', 'x']
+emissions_atmospheric_wetdepo_matrixembedded:
+  standard_name: tendency_of_atmosphere_mass_content_due_to_wet_deposition
+  long_name: tendency of atmosphere mass content of matrix-embedded nanomaterial due to wet deposition
   to_units: kg/m**2/timestep
   dims: ['t', 'y', 'x']
 emissions_atmospheric_wetdepo_transformed:

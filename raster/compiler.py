@@ -19,17 +19,20 @@ import sys
 
 class Compiler:
 
-    def __init__(self, config_path, model_vars_path, land_use_config_path, constants_path):
+    def __init__(self, config_path, model_vars_path):
         """Initialise the compiler by reading the config and model_var files,
         combining these and generating list of vars according to dimensionality.
         Also set up the unit registry and define 'timestep' as a unit."""
         yaml = YAML(typ='safe')
         with open(config_path, 'r') as config_file, \
-            open(model_vars_path, 'r') as model_vars_file, \
-            open(land_use_config_path, 'r') as land_use_config_file, \
-            open(constants_path, 'r') as constants_file:
+            open(model_vars_path, 'r') as model_vars_file:
             self.config = yaml.load(config_file)
             self.vars = yaml.load(model_vars_file)
+        # Get the constants and land use file paths from the config file, if present, else default
+        constants_file = self.config['constants_file'] if 'constants_file' in self.config else 'constants.yaml'
+        land_use_file = self.config['land_use_file'] if 'land_use_file' in self.config else 'land_use.yaml'
+        with open(constants_file, 'r') as constants_file, \
+            open(land_use_file, 'r') as land_use_config_file:
             self.land_use_config = yaml.load(land_use_config_file)
             self.constants = yaml.load(constants_file)
         # Combine config and model_vars
@@ -392,7 +395,8 @@ class Compiler:
                         print("Maximum of {0} point sources allowed per cell, but cell {1},{2} (x,y zero-indexed) has more than that.".format(values.shape[1], i, j))
                         sys.exit()
                 # Which temporal profile should be applied?
-                if point[var_dict['source_type_col']] == var_dict['temporal_profile']['for_source_type']:
+                if ('temporal_profile' in var_dict) and \
+                    point[var_dict['source_type_col']] == var_dict['temporal_profile']['for_source_type']:
                     point_values = point['emission'] * temporal_factors
                 else:
                     point_values = [point['emission']] * int(self.config['time']['n'])
