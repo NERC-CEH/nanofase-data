@@ -1,7 +1,7 @@
 # Setup
 output_file: data.nc
 constants_file: constants_tio2.yaml
-root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
+root_dir: C:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data
 iso3: GBR
 time:
   n: 365
