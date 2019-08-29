@@ -10,6 +10,14 @@ soil:
   default_porosity: 0.456
   hamaker_constant: 2.02e-20          # ref: SB4N
   particle_density: 2.5e3
+water:
+  resuspension_alpha: 5e-4
+  resuspension_beta: 5e-8
+  resuspension_alpha_estuary: 0.01
+  resuspension_beta_estuary: 0.001
+  k_diss_pristine: 9.49e-6
+  k_diss_transformed: 5.32e-9
+  k_transform_pristine: 1.67e-4
 earthworm_densities:
   heathland: 20
   grassland: 250
@@ -22,17 +30,17 @@ earthworm_densities:
 n_biota_grp:
   n_biota: 2
 biota:
-  name: ['wheat', 'earthworm']
-  compartment: ['soil', 'soil']
-  stored_fraction: [0, 0.1]
-  k_growth: [0.1, 1e-10]
-  k_death: [1e-10, 6.8e-4]
-  k_uptake_np: [0.148, 0.015]
-  k_elim_np: [0.105, 0.062]
-  k_uptake_transformed: [0.612, 0.016]
-  k_elim_transformed: [2.722, 0.231]
-  k_uptake_dissolved: [1.727, 0.1241]
-  k_elim_dissolved: [4.974, 0.228]
-  initial_C_org: [0, 0]
-  uptake_from_form: ['free_and_attached', 'free_and_attached']
-  harvest_in_month: [9, 0]
+  name: ['wheat', 'earthworm', 'chironomus']
+  compartment: ['soil', 'soil', 'water']
+  stored_fraction: [0, 0.1, 0.08]
+  k_growth: [0.1, 1e-10, 0.25]
+  k_death: [1e-10, 6.8e-4, 0.2]
+  k_uptake_np: [0.148, 0.015, 0]
+  k_elim_np: [0.105, 0.062, 0]
+  k_uptake_transformed: [0.612, 0.016, 1.38]
+  k_elim_transformed: [2.722, 0.231, 0.11]
+  k_uptake_dissolved: [1.727, 0.1241, 1.79]
+  k_elim_dissolved: [4.974, 0.228, 1.94]
+  initial_C_org: [0, 0, 0]
+  uptake_from_form: ['free_and_attached', 'free_and_attached', 'free_and_attached']
+  harvest_in_month: [9, 0, 0]
