@@ -1,6 +1,6 @@
 size_classes:
-  nm_size_classes: [10e-9, 30e-9, 100e-9, 300e-9, 1000e-9]
-  default_nm_size_distribution: [50, 30, 10, 7, 3]
+  nm_size_classes: [15e-9]
+  default_nm_size_distribution: [100]
   spm_size_classes: [1e-6, 3e-6, 10e-6, 30e-6, 100e-6]
   default_spm_size_distribution: [50, 30, 10, 7, 3]
   default_matrixembedded_distribution_to_spm: [20, 20, 20, 20, 20]
@@ -11,15 +11,6 @@ soil:
   default_porosity: 0.456
   hamaker_constant: 6.9e-21           # ref: Meesters 2016
   particle_density: 2.5e3
-earthworm_densities:
-  heathland: 20
-  grassland: 250
-  urban_parks: 250
-  urban_gardens: 150
-  urban_capped: 0
-  deciduous: 400
-  coniferous: 150
-  arable: 30
 water:
   resuspension_alpha: 0.0005
   resuspension_alpha_estuary: 0.01
@@ -34,3 +25,13 @@ water:
   estuary_mean_depth_expB: 1.46e-5
   estuary_width_expA: 12548
   estuary_width_expB: 5.25e-5
+earthworm_densities:
+  heathland: 20
+  grassland: 250
+  urban_parks: 250
+  urban_gardens: 150
+  urban_capped: 0
+  deciduous: 400
+  coniferous: 150
+  arable: 30
+  vertical_distribution: [50, 35, 15]

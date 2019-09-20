@@ -11,6 +11,14 @@ soil:
   default_porosity: 0.456
   hamaker_constant: 2.02e-20          # ref: SB4N
   particle_density: 2.5e3
+water:
+  resuspension_alpha: 5e-4
+  resuspension_beta: 5e-8
+  resuspension_alpha_estuary: 0.01
+  resuspension_beta_estuary: 0.001
+  k_diss_pristine: 9.49e-6
+  k_diss_transformed: 5.32e-9
+  k_transform_pristine: 1.67e-4
 earthworm_densities:
   heathland: 20
   grassland: 250

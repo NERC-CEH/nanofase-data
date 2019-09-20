@@ -1,0 +1,87 @@
+# Setup
+output_file: data.nc
+constants_file: constants_fccco.yaml
+root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
+iso3: GBR
+time:
+  n: 365
+  dt: 86400
+  start_date: 2000-01-01
+
+# Meteorological and hydrological
+flow_dir:
+  type: raster
+  path: interim/flowdir_05000_thames.tif
+  crs: EPSG:27700
+runoff:
+  type: csv
+  path: processed/model-preprocessed/runoff/runoff_2000.csv
+  units: mm/day
+precip:
+  type: raster
+  path: processed/model-preprocessed/rainfall/2000_{t}.tif
+  units: mm/day
+  t_min: 1
+  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2000 - Great Britain. Resampled to 5 km resolution.
+  references: Tanguy, M., Prosdocimi, I., Keller, V.D.J., Terry, J., Cole, S.J., Morris, D.G., Dixon, H. (2014). Consolidation of a CEH reference rainfall dataset for hydrological purposes for the UK. CEH-Wallingford, Oxfordshire, UK.
+
+# Soil
+soil_bulk_density:
+  type: raster
+  units: t/m**3
+  path: interim/soil/bulk-density_osgb_5km.tif
+  source: European Soil Data Centre topsoil physical properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/topsoil-physical-properties-europe-based-lucas-topsoil-data.
+soil_water_content_field_capacity:
+  type: raster
+  path: processed/model-preprocessed/soil_wc-fc.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe.
+soil_water_content_saturation:
+  type: raster
+  path: processed/model-preprocessed/soil_wc-sat.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
+soil_hydraulic_conductivity:
+  type: raster
+  units: cm/day
+  path: processed/model-preprocessed/soil_ks.tif
+  source: European Soil Data Centre soil hydraulic properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/maps-indicators-soil-hydraulic-properties-europe
+soil_texture_sand_content:
+  type: raster
+  path: processed/model-preprocessed/sand-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_clay_content:
+  type: raster
+  path: processed/model-preprocessed/clay-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_silt_content:
+  type: raster
+  path: processed/model-preprocessed/silt-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_texture_coarse_frag_content:
+  type: raster
+  path: processed/model-preprocessed/coarse-frag-content_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+
+# Land use
+land_use:
+  type: raster
+  path: processed/model-preprocessed/land-use.tif
+is_estuary:
+  type: raster
+  path: processed/grid/is-river-an-estuary.tif
+
+# Emissions - areal
+emissions_areal_soil_pristine:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_fccco_soil_matrix-embedded_2015.tif
+  units: kg/m**2/year
+emissions_areal_water_pristine:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_fccco_water_matrix-embedded_2015.tif
+  units: kg/m**2/year
+
+# Emissions - point
+emissions_point_water_pristine:
+  type: shapefile
+  value_var: emission
+  path: processed/model-preprocessed/emissions/emissions_point_fccco_water_matrix-embedded_2015/point_sources_water_matrix-embedded_2015.shp
+  units: kg/year
