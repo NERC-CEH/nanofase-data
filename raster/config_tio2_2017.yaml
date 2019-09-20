@@ -1,12 +1,13 @@
 # Setup
 output_file: data.nc
 constants_file: constants_tio2.yaml
+# root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
 root_dir: C:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data
 iso3: GBR
 time:
   n: 365
   dt: 86400
-  start_date: 2015-01-01
+  start_date: 2017-01-01
 
 # Meteorological and hydrological
 flow_dir:
@@ -22,7 +23,7 @@ precip:
   path: interim/rainfall/rainfall_5km_2015-{t}.tif
   units: mm/day
   t_min: 1
-  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2015 - Great Britain. Resampled to 5 km resolution.
+  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2000 - Great Britain. Resampled to 5 km resolution.
   references: Tanguy, M., Prosdocimi, I., Keller, V.D.J., Terry, J., Cole, S.J., Morris, D.G., Dixon, H. (2014). Consolidation of a CEH reference rainfall dataset for hydrological purposes for the UK. CEH-Wallingford, Oxfordshire, UK.
 
 # Soil
@@ -60,10 +61,10 @@ soil_texture_coarse_frag_content:
   type: raster
   path: processed/model-preprocessed/coarse-frag-content_osgb_5000m.tif
   source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
-# soil_usle_c_factor:
-#   type: raster
-#   path: processed/model-preprocessed/c-factor_osgb_5000m_qgis.tif
-#   source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_usle_c_factor:
+  type: raster
+  path: processed/model-preprocessed/c-factor_osgb_5000m_qgis.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
 soil_usle_ls_factor:
   type: raster
   path: processed/model-preprocessed/ls-factor_osgb_5000m.tif
@@ -72,6 +73,7 @@ soil_usle_p_factor:
   type: raster
   path: processed/model-preprocessed/p-factor_osgb_5000m.tif
   source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+
 
 # Land use
 land_use:
@@ -84,34 +86,34 @@ is_estuary:
 # Emissions - areal
 emissions_areal_soil_pristine:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_pristine_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_pristine_2017_interp.tif
   units: kg/m**2/year
 emissions_areal_soil_matrixembedded:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_matrix-embedded_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_matrix-embedded_2017_interp.tif
   units: kg/m**2/year
 emissions_areal_soil_transformed:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_transformed_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_transformed_2017_interp.tif
   units: kg/m**2/year
 emissions_areal_water_pristine:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_pristine_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_pristine_2017_interp.tif
   units: kg/m**2/year
 emissions_areal_water_matrixembedded:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_matrix-embedded_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_matrix-embedded_2017_interp.tif
   units: kg/m**2/year
 emissions_areal_water_transformed:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_transformed_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_transformed_2017_interp.tif
   units: kg/m**2/year
 
 # Emissions - point
 emissions_point_water_pristine:
   type: shapefile
-  value_var: emission
-  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_pristine_2015/point_sources_water_pristine_2015_osgb.shp
+  value_var: e_2017
+  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_pristine_2000-2020_interp/emissions_point_tio2_water_pristine_2000-2020_interp.shp
   source_type_col: profile
   temporal_profile:
     path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
@@ -121,8 +123,8 @@ emissions_point_water_pristine:
   units: kg/year
 emissions_point_water_matrixembedded:
   type: shapefile
-  value_var: emission
-  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_matrix-embedded_2015/point_sources_water_matrix-embedded_2015_osgb.shp
+  value_var: e_2017
+  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_matrix-embedded_2000-2020_interp/emissions_point_tio2_water_matrix-embedded_2000-2020_interp.shp
   source_type_col: profile
   temporal_profile:
     path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
@@ -132,8 +134,8 @@ emissions_point_water_matrixembedded:
   units: kg/year
 emissions_point_water_transformed:
   type: shapefile
-  value_var: emission
-  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_transformed_2015/point_sources_water_transformed_2015_osgb.shp
+  value_var: e_2017
+  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_transformed_2000-2020_interp/emissions_point_tio2_water_transformed_2000-2020_interp.shp
   source_type_col: profile
   temporal_profile:
     path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv

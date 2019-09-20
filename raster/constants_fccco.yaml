@@ -4,6 +4,7 @@ size_classes:
   spm_size_classes: [1e-6, 3e-6, 10e-6, 30e-6, 100e-6]
   default_spm_size_distribution: [50, 30, 10, 7, 3]
   default_matrixembedded_distribution_to_spm: [20, 20, 20, 20, 20]
+  spm_particle_densities: [1500, 2600, 2600, 2600]
 soil:
   darcy_velocity: 9.0e-6
   default_attachment_efficiency: 0.5  # ref: Meesters 2016
@@ -19,3 +20,17 @@ earthworm_densities:
   deciduous: 400
   coniferous: 150
   arable: 30
+water:
+  resuspension_alpha: 0.0005
+  resuspension_alpha_estuary: 0.01
+  resuspension_beta: 5e-8
+  resuspension_beta_estuary: 0.001
+  k_diss_pristine: 0
+  k_diss_transformed: 0
+  k_transform_pristine: 0
+  estuary_tidal_M2: 2.25
+  estuary_tidal_S2: 0.62
+  estuary_mean_depth_expA: 19.4
+  estuary_mean_depth_expB: 1.46e-5
+  estuary_width_expA: 12548
+  estuary_width_expB: 5.25e-5

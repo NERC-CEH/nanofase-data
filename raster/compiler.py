@@ -397,9 +397,9 @@ class Compiler:
                 # Which temporal profile should be applied?
                 if ('temporal_profile' in var_dict) and \
                     point[var_dict['source_type_col']] == var_dict['temporal_profile']['for_source_type']:
-                    point_values = point['emission'] * temporal_factors
+                    point_values = point[var_dict['value_var']] * temporal_factors
                 else:
-                    point_values = [point['emission']] * int(self.config['time']['n'])
+                    point_values = [point[var_dict['value_var']]] * int(self.config['time']['n'])
                 values[p,:,j,i] = point_values
                 coords[:,p,j,i] = [point['geometry'].x, point['geometry'].y]
 

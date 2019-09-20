@@ -1,7 +1,8 @@
 # Setup
 output_file: data.nc
 constants_file: constants_ag.yaml
-root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
+# root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
+root_dir: c:/users/sharrison/onedrive - nerc/ceh/projects/nanofase/data
 iso3: GBR
 time:
   n: 365
@@ -63,6 +64,18 @@ soil_texture_coarse_frag_content:
 soil_attachment_rate:
   type: raster
   path: processed/model-preprocessed/soil-attachment-rate_ag.tif
+soil_usle_c_factor:
+  type: raster
+  path: processed/model-preprocessed/c-factor_osgb_5000m_qgis.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_usle_ls_factor:
+  type: raster
+  path: processed/model-preprocessed/ls-factor_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_usle_p_factor:
+  type: raster
+  path: processed/model-preprocessed/p-factor_osgb_5000m.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
 
 # Land use
 land_use:

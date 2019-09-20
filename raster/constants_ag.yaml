@@ -4,6 +4,7 @@ size_classes:
   spm_size_classes: [1e-6, 3e-6, 10e-6, 30e-6, 100e-6]
   default_spm_size_distribution: [50, 30, 10, 7, 3]
   default_matrixembedded_distribution_to_spm: [20, 20, 20, 20, 20]
+  spm_particle_densities: [1500, 2600, 2600, 2600]
 soil:
   darcy_velocity: 9.0e-6
   default_attachment_efficiency: 0.08 # ref: D7.4
@@ -19,20 +20,35 @@ earthworm_densities:
   deciduous: 400
   coniferous: 150
   arable: 30
+  vertical_distribution: [50, 35, 15]
 n_biota_grp:
-  n_biota: 2
+  n_biota: 3
 biota:
-  name: ['wheat', 'earthworm']
-  compartment: ['soil', 'soil']
-  stored_fraction: [0, 0.1]
-  k_growth: [0.1, 1e-10]
-  k_death: [1e-10, 6.8e-4]
-  k_uptake_np: [0.148, 0.015]
-  k_elim_np: [0.105, 0.062]
-  k_uptake_transformed: [0.612, 0.016]
-  k_elim_transformed: [2.722, 0.231]
-  k_uptake_dissolved: [1.727, 0.1241]
-  k_elim_dissolved: [4.974, 0.228]
-  initial_C_org: [0, 0]
-  uptake_from_form: ['free_and_attached', 'free_and_attached']
-  harvest_in_month: [9, 0]
+  name: ['wheat', 'earthworm', 'chironomus']
+  compartment: ['soil', 'soil', 'water']
+  stored_fraction: [0, 0.1, 0.08]
+  k_growth: [0.1, 1e-10, 0.25]
+  k_death: [0, 0, 0]
+  k_uptake_np: [0.148, 0.015, 0]
+  k_elim_np: [0.105, 0.062, 0]
+  k_uptake_transformed: [0.612, 0.016, 1.38]
+  k_elim_transformed: [2.722, 0.231, 0.11]
+  k_uptake_dissolved: [1.727, 0.1241, 1.79]
+  k_elim_dissolved: [4.974, 0.228, 1.94]
+  initial_C_org: [0, 0, 0]
+  uptake_from_form: ['free_and_attached', 'free_and_attached', 'free']
+  harvest_in_month: [9, 0, 0]
+water:
+  resuspension_alpha: 0.0005
+  resuspension_alpha_estuary: 0.01
+  resuspension_beta: 5e-8
+  resuspension_beta_estuary: 0.001
+  k_diss_pristine: 0
+  k_diss_transformed: 0
+  k_transform_pristine: 0
+  estuary_tidal_M2: 2.25
+  estuary_tidal_S2: 0.62
+  estuary_mean_depth_expA: 19.4
+  estuary_mean_depth_expB: 1.46e-5
+  estuary_width_expA: 12548
+  estuary_width_expB: 5.25e-5

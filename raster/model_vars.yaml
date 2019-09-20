@@ -56,6 +56,18 @@ soil_attachment_rate:
   long_name: rate of attachment of nanomaterial to soil matrix
   to_units: s**-1
   dims: ['y', 'x']
+soil_usle_c_factor:
+  long_name: Universal Soil Loss Equation C-factor
+  to_units: ''
+  dims: ['y', 'x']
+soil_usle_p_factor:
+  long_name: Universal Soil Loss Equation P-factor
+  to_units: ''
+  dims: ['y', 'x']
+soil_usle_ls_factor:
+  long_name: Universal Soil Loss Equation LS-factor
+  to_units: ''
+  dims: ['y', 'x']
 
 # Land use
 land_use:

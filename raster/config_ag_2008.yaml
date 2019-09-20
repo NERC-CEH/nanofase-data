@@ -1,12 +1,13 @@
 # Setup
 output_file: data.nc
-constants_file: constants_tio2.yaml
-root_dir: C:/users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data
+constants_file: constants_ag.yaml
+# root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
+root_dir: C:/Users/sharrison/OneDrive - NERC/ceh/projects/nanofase/data
 iso3: GBR
 time:
-  n: 365
+  n: 366
   dt: 86400
-  start_date: 2015-01-01
+  start_date: 2008-01-01
 
 # Meteorological and hydrological
 flow_dir:
@@ -15,14 +16,14 @@ flow_dir:
   crs: EPSG:27700
 runoff:
   type: csv
-  path: processed/model-preprocessed/runoff/runoff_2015.csv
+  path: processed/model-preprocessed/runoff/runoff_2008.csv
   units: mm/day
 precip:
   type: raster
   path: interim/rainfall/rainfall_5km_2015-{t}.tif
   units: mm/day
   t_min: 1
-  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2015 - Great Britain. Resampled to 5 km resolution.
+  source: CEH Gridded Estimates of Areal Rainfall (CEH - GEAR) - Daily rainfall (mm) 1km resolution for year 2000 - Great Britain. Resampled to 5 km resolution.
   references: Tanguy, M., Prosdocimi, I., Keller, V.D.J., Terry, J., Cole, S.J., Morris, D.G., Dixon, H. (2014). Consolidation of a CEH reference rainfall dataset for hydrological purposes for the UK. CEH-Wallingford, Oxfordshire, UK.
 
 # Soil
@@ -60,10 +61,13 @@ soil_texture_coarse_frag_content:
   type: raster
   path: processed/model-preprocessed/coarse-frag-content_osgb_5000m.tif
   source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
-# soil_usle_c_factor:
-#   type: raster
-#   path: processed/model-preprocessed/c-factor_osgb_5000m_qgis.tif
-#   source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
+soil_attachment_rate:
+  type: raster
+  path: processed/model-preprocessed/soil-attachment-rate_ag.tif
+soil_usle_c_factor:
+  type: raster
+  path: processed/model-preprocessed/c-factor_osgb_5000m_qgis.tif
+  source: European Soil Data Centre soil texture dataset resampled to OS National Grid (ESPG:27700) by bilinear interpolation.
 soil_usle_ls_factor:
   type: raster
   path: processed/model-preprocessed/ls-factor_osgb_5000m.tif
@@ -84,34 +88,42 @@ is_estuary:
 # Emissions - areal
 emissions_areal_soil_pristine:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_pristine_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_pristine_2008_interp.tif
   units: kg/m**2/year
 emissions_areal_soil_matrixembedded:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_matrix-embedded_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_matrix-embedded_2008_interp.tif
   units: kg/m**2/year
 emissions_areal_soil_transformed:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_soil_transformed_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_transformed_2008_interp.tif
+  units: kg/m**2/year
+emissions_areal_soil_dissolved:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_soil_dissolved_2008_interp.tif
   units: kg/m**2/year
 emissions_areal_water_pristine:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_pristine_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_pristine_2008_interp.tif
   units: kg/m**2/year
 emissions_areal_water_matrixembedded:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_matrix-embedded_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_matrix-embedded_2008_interp.tif
   units: kg/m**2/year
 emissions_areal_water_transformed:
   type: raster
-  path: processed/model-preprocessed/emissions/emissions_areal_tio2_water_transformed_2015.tif
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_transformed_2008_interp.tif
+  units: kg/m**2/year
+emissions_areal_water_dissolved:
+  type: raster
+  path: processed/model-preprocessed/emissions/emissions_areal_ag_water_dissolved_2008_interp.tif
   units: kg/m**2/year
 
 # Emissions - point
 emissions_point_water_pristine:
   type: shapefile
-  value_var: emission
-  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_pristine_2015/point_sources_water_pristine_2015_osgb.shp
+  value_var: e_2008
+  path: processed/model-preprocessed/emissions/emissions_point_ag_water_pristine_2000-2020_interp/emissions_point_ag_water_pristine_2000-2020_interp.shp
   source_type_col: profile
   temporal_profile:
     path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
@@ -121,8 +133,8 @@ emissions_point_water_pristine:
   units: kg/year
 emissions_point_water_matrixembedded:
   type: shapefile
-  value_var: emission
-  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_matrix-embedded_2015/point_sources_water_matrix-embedded_2015_osgb.shp
+  value_var: e_2008
+  path: processed/model-preprocessed/emissions/emissions_point_ag_water_matrix-embedded_2000-2020_interp/emissions_point_ag_water_matrix-embedded_2000-2020_interp.shp
   source_type_col: profile
   temporal_profile:
     path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
@@ -132,8 +144,8 @@ emissions_point_water_matrixembedded:
   units: kg/year
 emissions_point_water_transformed:
   type: shapefile
-  value_var: emission
-  path: processed/model-preprocessed/emissions/emissions_point_tio2_water_transformed_2015/point_sources_water_transformed_2015_osgb.shp
+  value_var: e_2008
+  path: processed/model-preprocessed/emissions/emissions_point_ag_water_transformed_2000-2020_interp/emissions_point_ag_water_transformed_2000-2020_interp.shp
   source_type_col: profile
   temporal_profile:
     path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
@@ -141,35 +153,14 @@ emissions_point_water_transformed:
     for_source_type: P2
     factor_col: Factor
   units: kg/year
-
-# Emissions - atmospheric
-emissions_atmospheric_drydepo_pristine:
-  type: raster
-  path: processed/model-preprocessed/emissions/emissions_atmospheric_drydepo_tio2_pristine_2015/{t}.tif
-  units: kg/m**2/s
-  t_min: 1
-emissions_atmospheric_drydepo_matrixembedded:
-  type: raster
-  path: processed/model-preprocessed/emissions/emissions_atmospheric_drydepo_tio2_matrix-embedded_2015/{t}.tif
-  units: kg/m**2/s
-  t_min: 1
-emissions_atmospheric_drydepo_transformed:
-  type: raster
-  path: processed/model-preprocessed/emissions/emissions_atmospheric_drydepo_tio2_transformed_2015/{t}.tif
-  units: kg/m**2/s
-  t_min: 1
-emissions_atmospheric_wetdepo_pristine:
-  type: raster
-  path: processed/model-preprocessed/emissions/emissions_atmospheric_wetdepo_tio2_pristine_2015/{t}.tif
-  units: kg/m**2/s
-  t_min: 1
-emissions_atmospheric_wetdepo_matrixembedded:
-  type: raster
-  path: processed/model-preprocessed/emissions/emissions_atmospheric_wetdepo_tio2_matrix-embedded_2015/{t}.tif
-  units: kg/m**2/s
-  t_min: 1
-emissions_atmospheric_wetdepo_transformed:
-  type: raster
-  path: processed/model-preprocessed/emissions/emissions_atmospheric_wetdepo_tio2_transformed_2015/{t}.tif
-  units: kg/m**2/s
-  t_min: 1
+emissions_point_water_dissolved:
+  type: shapefile
+  value_var: e_2008
+  path: processed/model-preprocessed/emissions/emissions_point_ag_water_dissolved_2000-2020_interp/emissions_point_ag_water_dissolved_2000-2020_interp.shp
+  source_type_col: profile
+  temporal_profile:
+    path: processed/model-preprocessed/emissions/emissions_temporal-profile_2015.csv
+    source_type_col: Emission_source_type
+    for_source_type: P2
+    factor_col: Factor
+  units: kg/year

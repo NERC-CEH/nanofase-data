@@ -44,3 +44,5 @@ for var in compiler.vars_spatial_point:
 for var in compiler.vars_spatiotemporal:
     print('\t...{0}'.format(var))
     compiler.parse_spatiotemporal_var(var)
+
+print("Done! Data saved to data.nc.")
