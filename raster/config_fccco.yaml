@@ -1,8 +1,8 @@
 # Setup
 output_file: data.nc
 constants_file: constants_fccco.yaml
-# root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
-root_dir: c:/users/sharrison/onedrive - nerc/ceh/projects/nanofase/data
+root_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data
+# root_dir: c:/users/sharrison/onedrive - nerc/ceh/projects/nanofase/data
 iso3: GBR
 time:
   n: 365
