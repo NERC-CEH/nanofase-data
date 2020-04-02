@@ -1,19 +1,193 @@
-timesteps: 365
-use_cache: yes
-material: TiO2
-flow_dir_raster: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/flowdir_05000_thames.tif
-runoff: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/hydro/qf_sf.csv
-atmospheric_dry_depo_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/atmospheric/2019-03_malta/drydepo_np/
-atmospheric_wet_depo_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/atmospheric/2019-03_malta/wetdepo_np/
-# sources: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/NanoFASE_TiO2_emissions_to_surface_water_v0_1_20180712.txt
-sources: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/2019-03_thames/NANO_RESULTS_Thames.txt
-sources_areal: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/sources/2019-03_tio2_thames_pristine-only/
-sources_temp: /home/sharrison/OneDrive/ceh/projects/nanofase/data/raw/sources/2019-03_thames/Temporal_profiles_v1.txt
-soil_texture_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/
-bulk_density: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/bulk-density_osgb_5km.tif
-c-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/c-factor_osgb_5000m_qgis.tif
-ls-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/ls-factor_osgb_5000m.tif
-p-factor: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/soil/p-factor_osgb_5000m.tif
-precipitation_dir: /home/sharrison/OneDrive/ceh/projects/nanofase/data/interim/rainfall/
-tidal_bounds: /home/sharrison/OneDrive/ceh/projects/nanofase/data/processed/is-river-an-estuary.tif
-output_file: data.json
+# Setup
+nanomaterial: TiO2                                    # Name of the nanomaterial. Not used in model.
+output:
+  nc_file: /path/to/output/data.nc                    # Where do you want the output NetCDF file to be stored?
+  constants_file: /path/to/output/constants.nml       # Where do you want the output constants file to be stored?
+constants_file: /path/to/input/constants.yaml         # Where is the input constants file?
+land_use_file: /path/to/input/land_use.yaml           # Where is the input land use file?
+root_dir: path/to/input/                              # Root dir, can be used in path variables below as <root_dir>
+iso3: GBR                                             # iso3 code for country modelled
+time:
+  n: 365                                              # Number of timesteps to run the model for
+  dt: 86400                                           # Length of each timestep in seconds
+  start_date: 2015-01-01                              # Start date for the model run
+
+# Meteorological and hydrological
+flow_dir:                                             # Flow direction is responsible for defining the grid system
+  type: raster                                        # Type can be raster or csv (see docs)
+  path: <root_dir>flow_dir.tif                        # Path to file, <root_dir> variable can be used from above
+  crs: EPSG:27700                                     # Manually specify CRS if it is absent or ill-defined in file
+runoff:                                               # Runoff, usually provided by hydrological model
+  type: csv
+  path: <root_dir>runoff.csv
+  units: mm/day                                       # What units is the file in? These will be converted automatically by Pint: https://pint.readthedocs.io/en/0.10.1/
+precip:                                               # Precipitation
+  type: raster
+  path: <root_dir>rainfall-{t}.tif                    # If the variable is spatiotemporal, multiple raster files can be indexed by {t}, with one file per timestep
+  units: mm/day
+  t_min: 1                                            # What index should the multiple input files start at (default is 0)?
+  # Source and references can be provided and whilst these aren't used by the model, they will be added as attributes to the NetCDF file
+  source: Provided information about the source of the data here, and any data processing it has already been through (e.g. reprojection).
+  references: References to scientific papers.
+
+# Soil
+# Most soil properties can be obtained from the European Soil Data Center (ESDAC): https://esdac.jrc.ec.europa.eu/
+soil_bulk_density:
+  type: raster
+  units: t/m**3
+  path: <root_dir>bulk-density.tif
+  # Source example:
+  source: European Soil Data Centre topsoil physical properties resampled to OS National Grid (ESPG:27700) by bilinear interpolation. See https://esdac.jrc.ec.europa.eu/content/topsoil-physical-properties-europe-based-lucas-topsoil-data.
+soil_water_content_field_capacity:
+  type: raster
+  path: <root_dir>soil_wc-fc.tif
+soil_water_content_saturation:
+  type: raster
+  path: <root_dir>soil_wc-sat.tif
+soil_hydraulic_conductivity:
+  type: raster
+  units: cm/day
+  path: <root_dir>soil_ks.tif
+soil_texture_sand_content:                            # Sand content as a percentage. Sand + clay + silt must equal 100%
+  type: raster
+  path: <root_dir>sand-content.tif
+soil_texture_clay_content:
+  type: raster
+  path: <root_dir>clay-content.tif
+soil_texture_silt_content:
+  type: raster
+  path: <root_dir>silt-content.tif
+soil_texture_coarse_frag_content:
+  type: raster
+  path: <root_dir>coarse-frag-content.tif
+soil_usle_c_factor:                                   # Universal Soil Loss Equation (USLE) cover management factor
+  type: raster
+  path: <root_dir>c-factor.tif
+soil_usle_ls_factor:                                  # USLE topography (slope length and steepness) factor
+  type: raster
+  path: <root_dir>ls-factor.tif
+soil_usle_p_factor:                                   # USLE support practices factor
+  type: raster
+  path: <root_dir>p-factor.tif
+
+# Land use
+land_use:
+  type: raster
+  path: <root_dir>land-use.tif
+is_estuary:                                           # Boolean raster indicating whether waterbodies within a cell are estuarine
+  type: raster
+  path: <root_dir>is-river-an-estuary.tif
+
+# Emissions - areal
+# Variables can be omitted and emissions for that variable will be set to zero (e.g. if a particular form is not relevant for the NM modelled)
+emissions_areal_soil_pristine:                        # Areal emissions of pristine NM to soil
+  type: raster
+  path: <root_dir>areal_soil_pristine.tif
+  units: kg/m**2/year
+emissions_areal_soil_matrixembedded:                  # Areal emissions of matrix-embedded NM to soil
+  type: raster
+  path: <root_dir>areal_soil_matrix-embedded.tif
+  units: kg/m**2/year
+emissions_areal_soil_transformed:                     # Areal emissions of transformed NM to soil
+  type: raster
+  path: <root_dir>areal_soil_transformed.tif
+  units: kg/m**2/year
+emissions_areal_soil_dissolved:                       # Areal emissions of dissolved NM to soil
+    type: raster
+    path: <root_dir>areal_soil_dissolved.tif
+    units: kg/m**2/year
+emissions_areal_water_pristine:                       # Areal emissions of pristine NM to water
+  type: raster
+  path: <root_dir>areal_water_pristine.tif
+  units: kg/m**2/year
+emissions_areal_water_matrixembedded:                 # Areal emissions of matrix-embedded NM to water
+  type: raster
+  path: <root_dir>areal_water_matrix-embedded.tif
+  units: kg/m**2/year
+emissions_areal_water_transformed:                    # Areal emissions of transformed NM to water
+  type: raster
+  path: <root_dir>areal_water_transformed.tif
+  units: kg/m**2/year
+emissions_areal_water_dissolved:                      # Areal emissions of dissolved NM to water
+    type: raster
+    path: <root_dir>areal_water_dissolved.tif
+    units: kg/m**2/year
+
+# Emissions - point
+emissions_point_water_pristine:                       # Point source emissions of pristine NM to water
+  type: shapefile                                     # Point source emissions must be a shapefile
+  value_var: emission                                 # Which variable in the shapefile gives the emission value?
+  path: <root_dir>point_sources_water_pristine.shp    # Path to .shp file. Sidecar files must be present too
+  source_type_col: profile                            # Which variable in the shapefile gives the profile of each point? See the docs
+  temporal_profile:                                   # Temporal profile for these emissions
+    path: <root_dir>emissions_temporal-profile.csv    # Path to temporal profile CSV (see docs)
+    source_type_col: Emission_source_type             # Which column gives the emission source type profile?
+    for_source_type: P2                               # Which of these types does this temporal profile apply to?
+    factor_col: Factor                                # Which column gives the factor?
+  units: kg/year
+emissions_point_water_matrixembedded:                 # Point source emissions of matrix-embedded NM to water
+  type: shapefile
+  value_var: emission
+  path: <root_dir>point_sources_water_matrix-embedded.shp
+  source_type_col: profile
+  temporal_profile:
+    path: <root_dir>emissions_temporal-profile.csv
+    source_type_col: Emission_source_type
+    for_source_type: P2
+    factor_col: Factor
+  units: kg/year
+emissions_point_water_transformed:                    # Point source emissions of transformed NM to water
+  type: shapefile
+  value_var: emission
+  path: <root_dir>point_sources_water_transformed.shp
+  source_type_col: profile
+  temporal_profile:
+    path: <root_dir>emissions_temporal-profile.csv
+    source_type_col: Emission_source_type
+    for_source_type: P2
+    factor_col: Factor
+  units: kg/year
+emissions_point_water_dissolved:                      # Point source emissions of dissolved NM to water
+  type: shapefile
+  value_var: emission
+  path: <root_dir>point_sources_water_dissolved.shp
+  source_type_col: profile
+  temporal_profile:
+    path: <root_dir>emissions_temporal-profile.csv
+    source_type_col: Emission_source_type
+    for_source_type: P2
+    factor_col: Factor
+  units: kg/year
+
+# Emissions - atmospheric
+# Atmospheric deposition data can be provided as dry deposition (drydep) and wet deposition (wetdepo)
+emissions_atmospheric_drydepo_pristine:
+  type: raster
+  path: <root_dir>emissions_atmospheric_drydepo_pristine/{t}.tif    # {t} placeholder is used to iterate over files, with 1 file for each timestep
+  units: kg/m**2/s
+  t_min: 1
+emissions_atmospheric_drydepo_matrixembedded:
+  type: raster
+  path: <root_dir>emissions_atmospheric_drydepo_matrix-embedded/{t}.tif
+  units: kg/m**2/s
+  t_min: 1
+emissions_atmospheric_drydepo_transformed:
+  type: raster
+  path: <root_dir>emissions_atmospheric_drydepo_transformed/{t}.tif
+  units: kg/m**2/s
+  t_min: 1
+emissions_atmospheric_wetdepo_pristine:
+  type: raster
+  path: <root_dir>emissions_atmospheric_wetdepo_pristine/{t}.tif
+  units: kg/m**2/s
+  t_min: 1
+emissions_atmospheric_wetdepo_matrixembedded:
+  type: raster
+  path: <root_dir>emissions_atmospheric_wetdepo_matrix-embedded/{t}.tif
+  units: kg/m**2/s
+  t_min: 1
+emissions_atmospheric_wetdepo_transformed:
+  type: raster
+  path: <root_dir>emissions_atmospheric_wetdepo_transformed/{t}.tif
+  units: kg/m**2/s
+  t_min: 1

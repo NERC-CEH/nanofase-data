@@ -6,3 +6,4 @@ cache/
 *.nc
 *.nc.aux.xml
 docs/_build/
+.idea

@@ -1,12 +1,12 @@
 import numpy as np
 
+
 class Router:
 
     def __init__(self, flow_dir):
         """Initiliase the routing class with the flow direction array."""
         self.flow_dir = flow_dir
         self.grid_mask = self.flow_dir.mask
-
 
     def outflow_from_flow_dir(self, x, y):
         """Get the outflow cell reference given the current cell
@@ -22,7 +22,6 @@ class Router:
             128: [x+1, y-1]
         }
         return xy_out[self.flow_dir[y-1, x-1]]
-
 
     def inflows_from_flow_dir(self, x, y):
         """Get the inflow cell references given the current cell
@@ -43,30 +42,27 @@ class Router:
         }
         inflow_cells = []
         # Loop through the neighbours and check if they're inflows to this cell
-        for j_n in range(j-1,j+2):
-            for i_n in range(i-1,i+2):
+        for j_n in range(j-1, j+2):
+            for i_n in range(i-1, i+2):
                 if self.in_model_domain(i_n, j_n):
                     if self.flow_dir[j_n, i_n] == inflow_flow_dir[(j_n-j, i_n-i)]:
                         inflow_cells.append([i_n+1, j_n+1])
-
         # Create masked array from the inflow_cells list
         inflow_cells_ma = np.ma.array(np.ma.empty((7,2), dtype=int), mask=True)
         if len(inflow_cells) > 0:       # Only fill if there are inflows
             inflow_cells_ma[0:len(inflow_cells)] = inflow_cells
         return inflow_cells_ma
 
-
     def in_model_domain(self, i, j):
         """Check if index [j,i] is in model domain."""
-        i_in_domain = i >= 0 and i < self.grid_mask.shape[1]
-        j_in_domain = j >= 0 and j < self.grid_mask.shape[0]
+        i_in_domain = 0 <= i < self.grid_mask.shape[1]
+        j_in_domain = 0 <= j < self.grid_mask.shape[0]
         not_masked = self.flow_dir[j, i] is not np.ma.masked if (i_in_domain and j_in_domain) else False
         return i_in_domain and j_in_domain and not_masked
 
-
     def n_waterbodies_from_inflows(self, x, y, outflow, inflows):
         """Calculate the number of waterbodies from the inflows to the cell."""
-        j, i = y - 1, x - 1
+        # j, i = y - 1, x - 1
         j_out, i_out = outflow[1] - 1, outflow[0] - 1
         n_inflows = inflows.count(axis=0)[0]        # Count the unmasked elements to get n_inflows
         # If there are no inflows but the outflow is to the model domain, it
@@ -78,7 +74,6 @@ class Router:
             n_waterbodies = n_inflows
             is_headwater = 0
         return n_waterbodies, is_headwater
-
 
     # def generate_waterbody_code(self, x, y, outflow, inflows, is_estuary, is_headwater):
     #     """Generates character code of the waterbodies of this cell, of the format
@@ -98,7 +93,6 @@ class Router:
     #     if is_headwater:
     #         wb_char = '{0}1(0:{1}/01)'.format(wb_type, outflow_point)
     #     return wb_char
-
 
     # def point_index(self, di, dj):
     #     point_index = {

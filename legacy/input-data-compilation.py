@@ -2,9 +2,8 @@
 """Compiling different data sources into JSON file (for conversion to NetCDF)
 for NanoFASE model."""
 import rasterio
-from rasterio.features import rasterize
 import yaml
-import datautils as du
+from legacy import datautils as du
 import json
 from deepmerge import Merger
 

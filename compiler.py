@@ -1,5 +1,5 @@
-import math
-import netCDF4
+import sys
+import os
 from netCDF4 import Dataset
 import numpy as np
 import pandas as pd
@@ -12,10 +12,8 @@ from shapely.geometry import box
 from ruamel.yaml import YAML
 from pint import UnitRegistry
 import f90nml
-import os
 from router import Router
 
-import sys
 
 class Compiler:
 
@@ -24,15 +22,13 @@ class Compiler:
         combining these and generating list of vars according to dimensionality.
         Also set up the unit registry and define 'timestep' as a unit."""
         yaml = YAML(typ='safe')
-        with open(config_path, 'r') as config_file, \
-            open(model_vars_path, 'r') as model_vars_file:
+        with open(config_path, 'r') as config_file, open(model_vars_path, 'r') as model_vars_file:
             self.config = yaml.load(config_file)
             self.vars = yaml.load(model_vars_file)
         # Get the constants and land use file paths from the config file, if present, else default
         constants_file = self.config['constants_file'] if 'constants_file' in self.config else 'constants.yaml'
         land_use_file = self.config['land_use_file'] if 'land_use_file' in self.config else 'land_use.yaml'
-        with open(constants_file, 'r') as constants_file, \
-            open(land_use_file, 'r') as land_use_config_file:
+        with open(constants_file, 'r') as constants_file, open(land_use_file, 'r') as land_use_config_file:
             self.land_use_config = yaml.load(land_use_config_file)
             self.constants = yaml.load(constants_file)
         # Combine config and model_vars
@@ -41,8 +37,10 @@ class Compiler:
                 self.vars[k].update(v)
         # If path not in vars dict, then we can't do anything, so remove. This is likely because
         # it didn't appear in config.yaml.
-        self.vars = { k : v for k, v in self.vars.items() if 'path' in v }
-        # Add the separate land use category convertor array
+        self.vars = {k: v for k, v in self.vars.items() if 'path' in v}
+        # Parse the paths, substituting <root_dir> and adding to path
+        self.parse_paths()
+        # Add the separate land use category converter array
         self.vars['land_use']['cat_conv_dict'] = self.land_use_config
         # Get a list of constants, spatial and spatiotemporal variables
         self.vars_spatial = []
@@ -66,57 +64,71 @@ class Compiler:
         self.root_dir = self.config['root_dir'] if 'root_dir' in self.config else ''
         # Create empty dict ready to save vars to memory
         self.saved_vars = {}
-    
+
+    def parse_paths(self):
+        """Search for <root_dir> in config variable configs and replace with root_dir as
+        as specified in config file."""
+        for k, v in self.vars.items():
+            if '<root_dir>' in v['path']:
+                self.vars[k]['path'] = os.path.join(self.config['root_dir'], v['path'].split('<root_dir>')[1])
+            if 'temporal_profile' in v:
+                path = v['temporal_profile']['path']
+                if '<root_dir>' in path:
+                    self.vars[k]['temporal_profile']['path'] \
+                        = os.path.join(self.config['root_dir'], path.split('<root_dir>')[1])
 
     def parse_flow_dir(self):
         """Parse the flow direction variable and define the CRS and mask for other
         variables based on this. This step must be performed before NetCDF file is generated."""
-
         if self.config['flow_dir']['type'] == 'raster':
-            self.grid = rasterio.open(os.path.join(self.root_dir, self.config['flow_dir']['path']))
+            self.grid = rasterio.open(self.config['flow_dir']['path'].replace('<root_dir>', self.config['root_dir']))
             # If a CRS has been specified for the flowdir raster, use this instead of the raster's
             # internal CRS. This is useful if a raster has an ill-defined CRS
-            self.grid_crs = CRS.from_user_input(self.config['flow_dir']['crs']) if 'crs' in self.config['flow_dir'] else self.grid.crs
+            self.grid_crs = CRS.from_user_input(self.config['flow_dir']['crs']) \
+                if 'crs' in self.config['flow_dir'] else self.grid.crs
             # Only projected rasters allowed for the moment
             if self.grid_crs.is_geographic:
-                print('Sorry, the flow_dir raster must be projected, not geographic. I got a geographic CRS: \'{0}\'.'.format(self.grid_crs))
+                print('Sorry, the flow_dir raster must be projected, not geographic. '
+                      'I got a geographic CRS: \'{0}\'.'.format(self.grid_crs))
                 sys.exit()
-            self.grid_bbox = box(*self.grid.bounds)                         # Create Shapely box from bounds, to clip other rasters to
+            # Create Shapely box from bounds, to clip other rasters to
+            self.grid_bbox = box(*self.grid.bounds)
         elif self.config['flow_dir']['type'] == 'csv':
             print("CSV flow direction not currently supported. Please provide a raster file.")
             sys.exit()
 
         else:
-            print("Unrecognised file type {0} for variable flow_dir. Type should be rs, csv or nc.".format(self.config['flow_dir']['type']))
+            print("Unrecognised file type {0} for variable flow_dir. "
+                  "Type should be rs, csv or nc.".format(self.config['flow_dir']['type']))
             sys.exit()
-
 
     def setup_netcdf_dataset(self):
         """Create NetCDF file, add required dimensions, coordinate variables and the
         flow direction variable."""
-        self.nc = Dataset(self.config['output_file'], 'w', format='NETCDF4')
+        self.nc = Dataset(self.config['output']['nc_file'], 'w', format='NETCDF4')
         self.nc.title = "Input data for NanoFASE model"
+        self.nc.nanomaterial = self.config['nanomaterial'] if 'nanomaterial' in self.config else 'Unknown'
         self.nc.Conventions = 'CF-1.6'
-        crs_var = self.nc.createVariable('crs','i4')
+        crs_var = self.nc.createVariable('crs', 'i4')
         crs_var.spatial_ref = self.grid_crs.to_wkt()            # QGIS/ArcGIS recognises spatial_ref to define CRS
         crs_var.crs_wkt = self.grid_crs.to_wkt()                # Latest CF conventions say crs_wkt can be used
         # Time dimensions and coordinate variable
         t_dim = self.nc.createDimension('t', None)
-        t = self.nc.createVariable('t','i4',('t',))
+        t = self.nc.createVariable('t', 'i4', ('t',))
         t.units = "seconds since {0} 00:00:00".format(self.config['time']['start_date'])
         t.standard_name = 'time'
         t.calendar = 'gregorian'
         t[:] = [i*int(self.config['time']['dt']) for i in range(int(self.config['time']['n']))]
         # x dimension and coordinate variable
         x_dim = self.nc.createDimension('x', self.grid.width)
-        x = self.nc.createVariable('x','f4',('x',))
+        x = self.nc.createVariable('x', 'f4', ('x',))
         x.units = 'm'
         x.standard_name = 'projection_x_coordinate'
         x.axis = 'X'
         x[:] = [self.grid.bounds.left + i * self.grid.res[0] + 0.5 * self.grid.res[0] for i in range(self.grid.width)]
         # y dimension and coordinate variable
         y_dim = self.nc.createDimension('y', self.grid.height)
-        y = self.nc.createVariable('y','f4',('y',))
+        y = self.nc.createVariable('y', 'f4', ('y',))
         y.units = 'm'
         y.standard_name = 'projection_y_coordinate'
         y.axis = 'Y'
@@ -141,13 +153,13 @@ class Compiler:
         grid_bounds.units = ''
         grid_bounds.long_name = 'bounding box of the grid'
         grid_bounds[:] = self.grid.bounds
-        # Add the flow direction
-        self.flow_dir = self.grid.read(1, masked=True)              # Get the flow direction array from the raster
-        self.grid_mask = np.ma.getmask(self.flow_dir)               # Use the extent of the flow direction array to create a mask for all other data
+        # Get the flow direction array from the raster
+        self.flow_dir = self.grid.read(1, masked=True)
+        # Use the extent of the flow direction array to create a mask for all other data
+        self.grid_mask = np.ma.getmask(self.flow_dir)
         nc_var = self.nc.createVariable('flow_dir', 'i4', ('y', 'x'))
         nc_var.long_name = 'flow direction of water in grid cell'
         nc_var[:] = self.flow_dir
-
 
     def setup_netcdf_var(self, var_name, extra_dims=None, coords_sidecar=False):
         var_dict = self.vars[var_name]
@@ -183,10 +195,9 @@ class Compiler:
         else:
             return nc_var
 
-
     def parse_constants(self):
         """Turn the constant YAML file into a Fortran namelist file."""
-        with open('constants.nml','w') as nml_file:
+        with open(self.config['output']['constants_file'], 'w') as nml_file:
             allocatable_array_sizes = {}
             for grp in self.constants.values():
                 for k, v in grp.items():
@@ -195,14 +206,13 @@ class Compiler:
             f90nml.write({'allocatable_array_sizes' : allocatable_array_sizes}, nml_file)
             f90nml.write(self.constants, nml_file)
 
-
     def parse_raster(self, var_name, units, path=None):
         """Parse a variable (or timestep of a variable) given by raster."""
         var_dict = self.vars[var_name]
         if path is None:
             path = var_dict['path']
         # Open the raster and clip to extent of grid (defined by flowdir raster)
-        with rasterio.open(os.path.join(self.root_dir, path), 'r') as rs:
+        with rasterio.open(path) as rs:
             out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
         values = np.ma.masked_where(self.grid_mask, out_img[0])
         # Should the array be clipped?
@@ -222,7 +232,6 @@ class Compiler:
         values.ito(units[1])
         # Return the values
         return values
-
 
     def parse_spatial_var(self, var_name, save=False):
         # Create and fill attributes in NetCDF file for given variable.
@@ -249,7 +258,6 @@ class Compiler:
         else: 
             print("Unrecognised file type {0} for variable {1}. Type should be raster, csv or nc.".format(var_dict['type'], var_name))
 
-
     def parse_spatial_point_var(self, var_name):
         # Get the var dict, but don't create the NetCDF var yet as we need to parse data before
         # we know the max length of the points per cell dimension
@@ -275,7 +283,6 @@ class Compiler:
         else: 
             print("Unrecognised file type {0} for variable {1}. Type should be raster, csv or nc.".format(var_dict['type'], var_name))
 
-
     def parse_spatial_1d_var(self, var_name):
         var_dict = self.vars[var_name]
         record_dim = [d for d in var_dict['dims'] if d not in ['x', 'y']][0]    # Get the dim that isn't x or y
@@ -300,7 +307,6 @@ class Compiler:
             else:
                 print("Unrecognised file type {0} for variable {1}. Type should be raster for 1d spatial variables.".format(config[var]['type'], var))
 
-
     def parse_spatiotemporal_var(self, var_name):
         nc_var = self.setup_netcdf_var(var_name)
         var_dict = self.vars[var_name]
@@ -319,15 +325,15 @@ class Compiler:
                 t_min = 0 if 't_min' not in var_dict else int(var_dict['t_min'])
                 # Loop through the time steps and parse raster for each
                 for t in range(t_min, int(self.config['time']['n']) + t_min):
-                    path = var_dict['path'].replace('{t}',str(t))
+                    path = var_dict['path'].replace('{t}', str(t))
                     values = self.parse_raster(var_name, (from_units, to_units), path)
                     # Add this time step to the NetCDF file as a masked array
-                    nc_var[t-1,:,:] = values.magnitude
+                    nc_var[t-1, :, :] = values.magnitude
             else:
                 print("Spatiotemporal variable ({0}) in raster format must be provided by one raster file per time step, with path denoted by /{t/}".format(var_name))
            
         elif var_dict['type'] == 'csv':
-            df = pd.read_csv(os.path.join(self.root_dir, var_dict['path']), header=0)
+            df = pd.read_csv(var_dict['path'], header=0)
             # Loop through the timesteps and create pivot table to obtain spatial array for each
             for t in range(1,df['t'].max()+1):
                 df_t = df[df['t'] == t]
@@ -356,7 +362,6 @@ class Compiler:
         else:
             print("Unrecognised file type {0} for variable {1}. Type should be raster or csv.".format(config[var]['type'], var))
 
-
     def parse_shapefile(self, var_name, units):
         """Parse a shapefile of point values into the model grid, with dimensions ['p', 'y', 'x'],
         where [p] is each point in the grid cell (x,y). A second array describing the location of
@@ -368,7 +373,7 @@ class Compiler:
         if 'temporal_profile' in var_dict:
             # Load the temporal profile CSV and create list of temporal factors. These are interpolated
             # if the time step is not 1 day (the temporal factor time step)
-            df = pd.read_csv(os.path.join(self.root_dir, var_dict['temporal_profile']['path']), header=0, sep=';')
+            df = pd.read_csv(var_dict['temporal_profile']['path'], header=0, sep=';')
             df = df[(df['ISO3'] == self.config['iso3'].upper()) & (df[var_dict['temporal_profile']['source_type_col']] == var_dict['temporal_profile']['for_source_type'])]
             temporal_factors_data = df[var_dict['temporal_profile']['factor_col']].tolist()
             # Do the interpolation
@@ -377,7 +382,7 @@ class Compiler:
                 np.arange(0, 86400 * len(temporal_factors_data), 86400),                                                        # The given x temporal res (presuming daily)
                 temporal_factors_data,                                                                                          # The provided temporal factors
             )
-        gdf = gpd.read_file(os.path.join(self.root_dir, self.vars[var_name]['path']))
+        gdf = gpd.read_file(self.vars[var_name]['path'])
         # Create empty values array and set a maximum of 100 point sources
         values = np.ma.array(np.ma.empty((10, int(self.config['time']['n']), *self.flow_dir.shape), dtype=np.float64), mask=True)
         coords = np.ma.array(np.ma.empty((2, 10, *self.flow_dir.shape), dtype=np.float32), mask=True)
@@ -418,7 +423,6 @@ class Compiler:
         
         return values, coords
 
-
     def parse_land_use(self, cat_dim):
         """Convert the supplied raster of land use categories to a multi-band array of NanoFASE land
         use categories."""
@@ -428,7 +432,7 @@ class Compiler:
 
         # Open the supplied land use raster
         # Open the raster and clip to extent of grid (defined by flowdir raster)
-        with rasterio.open(os.path.join(self.root_dir, self.vars['land_use']['path']), 'r') as rs:
+        with rasterio.open(self.vars['land_use']['path']) as rs:
             out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
             src_arr = out_img[0]
 
@@ -485,9 +489,8 @@ class Compiler:
         # filling entire variable at once
         nc_var = self.setup_netcdf_var('land_use', [(cat_dim, len(cats))])
         nc_var.cat_names = list(cats.keys())
-        for l, (cat_name, cat) in enumerate(cats.items()):
-            nc_var[l,:,:] = cat
-
+        for i, (cat_name, cat) in enumerate(cats.items()):
+            nc_var[i, :, :] = cat
 
     def routing(self):
         """Use the flow direction to route the waterbody network."""
@@ -498,7 +501,6 @@ class Compiler:
         inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, 7, 2), dtype=np.dtype('i2')), mask=True)      # Max of seven inflows
         n_waterbodies = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype('i2')), mask=True)
         is_headwater = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype('u1')), mask=True)
-        # waterbody_code = np.ma.array(np.ma.empty(self.flow_dir.shape, dtype=np.dtype(('U', 70))), mask=True)
 
         # Use the flow direction to set outflow and inflows to each cell
         for index, cell in np.ndenumerate(self.flow_dir):
@@ -506,13 +508,8 @@ class Compiler:
             if not self.grid_mask[index]:       # Only for non-masked elements
                 outflow_arr[index] = router.outflow_from_flow_dir(x, y)
                 inflows_arr[index] = router.inflows_from_flow_dir(x, y)
-                n_waterbodies[index], is_headwater[index] = router.n_waterbodies_from_inflows(x, y, outflow_arr[index], inflows_arr[index])
-                # waterbody_code[index] = router.generate_waterbody_code(x,
-                #                                                        y,
-                #                                                        outflow_arr[index],
-                #                                                        inflows_arr[index],
-                #                                                        self.saved_vars['is_estuary'][index],
-                #                                                        is_headwater[index])
+                n_waterbodies[index], is_headwater[index]\
+                    = router.n_waterbodies_from_inflows(x, y, outflow_arr[index], inflows_arr[index])
         
         # Create NetCDF vars for these arrays. Firstly, outflow
         nc_var = self.nc.createVariable('outflow', np.dtype('i2'), ('y', 'x', 'd'))
@@ -534,6 +531,7 @@ class Compiler:
         nc_var.units = ''
         nc_var.grid_mapping = 'crs'
         nc_var[:] = n_waterbodies
+
         # Is cell a headwater?
         nc_var = self.nc.createVariable('is_headwater', np.dtype('u1'), ('y', 'x'))
         nc_var.long_name = 'is this cell a headwater?'
@@ -541,57 +539,12 @@ class Compiler:
         nc_var.grid_mapping = 'crs'
         nc_var[:] = is_headwater
 
-
     def in_model_domain(self, point):
         """Check if a point is in the model domain."""
-        if (point.x >= self.grid.bounds.left) and (point.x < self.grid.bounds.right) and (point.y > self.grid.bounds.bottom) and (point.y <= self.grid.bounds.top):
+        if (point.x >= self.grid.bounds.left)\
+                and (point.x < self.grid.bounds.right)\
+                and (point.y > self.grid.bounds.bottom)\
+                and (point.y <= self.grid.bounds.top):
             return True
         else:
             return False
-         
-
-        # # Set the outflows array for each cell
-        # for index, cell in np.ndenumerate(self.flow_dir):
-        #     y, x = index[0] + 1, index[1] + 1
-        #     if not self.flow_dir.mask[index]:       # Only for non-masked elements
-        #         outflow_arr[index] = self.outflow_from_flow_dir(x, y, cell)[::-1]
-
-        # Use that to set the inflows array to each cell
-        # for j, xy in enumerate(outflow_arr):
-        #     for i, outflow in enumerate(xy):
-        #         if not self.flow_dir.mask[j,i]:
-        #             x_in, y_in = i + 1, j + 1
-        #             l, m = outflow[1] - 1, outflow[0] - 1
-        #             k = inflows_arr[m,l].count(axis=0)          # How many inflow cells already set
-        #             inflows_arr[m,l,k] = [y_in,x_in]
-
-        # Use the number of inflows for each cell to set number of waterbodies
-        # n_waterbodies_arr = inflows_arr.count(axis=2)[:,:,0]
-        # n_waterbodies_arr = np.ma.masked_array(n_waterbodies_arr, mask=self.flow_dir.mask)
-        # max_n_waterbodies_per_cell = n_waterbodies_arr.max()
-        # headwaters = np.ma.array(np.full((*self.flow_dir.shape, 7), False), mask=True)      # Max of seven waterbodies per cell
-        # stream_order = np.ma.array(np.empty((*self.flow_dir.shape, 7), dtype=int), mask=True)
-        # # If number of inflows is zero, it must be a headwater
-        # for index, n_waterbodies in np.ndenumerate(n_waterbodies_arr):
-        #     if not self.flow_dir.mask[index]:
-        #         if n_waterbodies == 0:
-        #             n_waterbodies_arr[index] = 1
-        #             headwaters[index][0] = True
-        #             stream_order[index][0] = 1
-
-        # # Use the number of waterbodies to create an array of inflows to each waterbody
-        # waterbody_inflows_arr = np.ma.array(np.ma.empty((*self.flow_dir.shape, max_n_waterbodies_per_cell, 7, 3), dtype=int), mask=True)
-        # # Loop through cell inflows to create this array
-        # for j, xyw in enumerate(inflows_arr):
-        #     for i, cell_inflows in enumerate(xyw):
-        #         if not self.flow_dir.mask[j,i]:         # Only if we're in the model domain
-        #             if not cell_inflows.mask.all():     # Only if the cell has inflows
-        #                 for k, cell_inflow in enumerate(cell_inflows):
-        #                     if not cell_inflow.mask.any():
-        #                         j_in, i_in = cell_inflow[0] - 1, cell_inflow[1] - 1
-        #                         n_waterbodes_inflow = n_waterbodies_arr[j_in, i_in]
-        #                         # Each cell inflow is to one waterbody, and this waterbody receives all the inflows from that cell
-        #                         for w in range(1, n_waterbodes_inflow + 1):
-        #                             waterbody_inflows_arr[j,i,k,w-1] = [*cell_inflow, w]
-
-        # NEXT, set waterbody outflow array
