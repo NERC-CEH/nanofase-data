@@ -1,3 +1,4 @@
+import shutil
 import sys
 import os
 from netCDF4 import Dataset
@@ -17,20 +18,19 @@ from router import Router
 
 class Compiler:
 
-    def __init__(self, config_path, model_vars_path):
-        """Initialise the compiler by reading the config and model_var files,
-        combining these and generating list of vars according to dimensionality.
-        Also set up the unit registry and define 'timestep' as a unit."""
-        yaml = YAML(typ='safe')
+    def __init__(self, task, config_path, model_vars_path):
+        """Initialise the compiler, either to compile or edit the dataset."""
+        # Open the config and model_vars files
+        self.yaml = YAML(typ='safe')
         with open(config_path, 'r') as config_file, open(model_vars_path, 'r') as model_vars_file:
-            self.config = yaml.load(config_file)
-            self.vars = yaml.load(model_vars_file)
-        # Get the constants and land use file paths from the config file, if present, else default
-        constants_file = self.config['constants_file'] if 'constants_file' in self.config else 'constants.yaml'
-        land_use_file = self.config['land_use_file'] if 'land_use_file' in self.config else 'land_use.yaml'
-        with open(constants_file, 'r') as constants_file, open(land_use_file, 'r') as land_use_config_file:
-            self.land_use_config = yaml.load(land_use_config_file)
-            self.constants = yaml.load(constants_file)
+            self.config = self.yaml.load(config_file)
+            self.vars = self.yaml.load(model_vars_file)
+        # Get the land use file path from the config file. Use default land use if not present
+        land_use_file = self.config['land_use_file'] if 'land_use_file' in self.config \
+            else os.path.join(sys.path[0], 'land_use.default.yaml')
+        # Open this YAML file and store in land_use_config dict
+        with open(land_use_file, 'r') as land_use_config_file:
+            self.land_use_config = self.yaml.load(land_use_config_file)
         # Combine config and model_vars
         for k, v in self.config.items():
             if k in self.vars:
@@ -41,7 +41,8 @@ class Compiler:
         # Parse the paths, substituting <root_dir> and adding to path
         self.parse_paths()
         # Add the separate land use category converter array
-        self.vars['land_use']['cat_conv_dict'] = self.land_use_config
+        if 'land_use' in self.vars:
+            self.vars['land_use']['cat_conv_dict'] = self.land_use_config
         # Get a list of constants, spatial and spatiotemporal variables
         self.vars_spatial = []
         self.vars_spatial_1d = []
@@ -58,12 +59,116 @@ class Compiler:
                 self.vars_spatial_1d.append(k)
         # Setup the unit registry
         self.ureg = UnitRegistry()
-        # Define the timestep as a unit, based on that given in config file
-        self.ureg.define('timestep = {0} * second'.format(self.config['time']['dt']))
         # Was a root directory specified?
         self.root_dir = self.config['root_dir'] if 'root_dir' in self.config else ''
         # Create empty dict ready to save vars to memory
         self.saved_vars = {}
+        # Do we want to compile or edit a dataset?
+        if task == 'create':
+            self.__init_to_compile()
+        elif task == 'edit':
+            self.__init_to_edit()
+
+    def __init_to_compile(self):
+        """Initialise the dataset for compilation from scratch. Reads the config and model_var files,
+        combines these and generates a list of vars according to dimensionality.
+        Also sets up the unit registry and defines 'timestep' as a unit."""
+        with open(self.config['constants_file'], 'r') as constants_file:
+            self.constants = self.yaml.load(constants_file)
+        # Define the timestep as a unit, based on that given in config file
+        self.ureg.define('timestep = {0} * second'.format(self.config['time']['dt']))
+
+    def __init_to_edit(self):
+        """Initialise the compiler for editing a dataset."""
+        # Check we're not trying to edit one of the following variables. We're looping over self.config.keys()
+        # here because flow_dir will have been removed from self.vars already
+        for var in self.config.keys():
+            if var in ['flow_dir', 'is_estuary']:
+                sys.exit(f'Sorry, editing the {var} variable isn\'t allowed. Create a new dataset instead.')
+        # If output_nc_path given, make a copy of the NetCDF file first
+        if 'output_nc_file' in self.config:
+            shutil.copy(self.config['input_nc_file'], self.config['output_nc_file'])
+        else:
+            self.config['output_nc_file'] = self.config['input_nc_file']
+        # Open the NetCDF dataset
+        self.nc = Dataset(self.config['output_nc_file'], 'r+')
+        # Get timestep info from the NetCDF file. Start date not needed for editing, so we won't retrieve this
+        self.config['time'] = {
+            'n': len(self.nc['t']),                         # Get number of timesteps from the length of t variable
+            'dt': self.nc['t'][1] - self.nc['t'][0]         # Get the timestep length from difference between timesteps
+        }
+        # Define the timestep as a unit, based on that given in config file
+        self.ureg.define('timestep = {0} * second'.format(self.config['time']['dt']))
+        # Set grid properties from the NetCDF file
+        self.grid = rasterio.open(f'netcdf:{self.config["output_nc_file"]}:flow_dir')
+        self.grid_crs = CRS.from_wkt(self.nc['crs'].crs_wkt)
+        self.grid_bbox = box(*self.grid.bounds)
+        self.grid_mask = np.ma.getmask(self.grid.read(1, masked=True))
+
+    def create(self):
+        """Compile the data from multiple input files, specified in the config file, to a NetCDF dataset for
+        spatial and/or temporal data, and a Fortran namelist file for constants."""
+        # Set up the dataset:
+        # - Use flow direction raster to give us the grid system (bounds, CRS, etc)
+        # - Creating the NetCDF dataset with this grid information
+        # - Set tidal bounds in lieu of routing
+        # - Route water bodies (e.g. set inflows, outflows and headwaters) using the flow direction and tidal bounds
+        print('Setting up dataset...\n'
+              '\t...parsing flow_dir')
+        self.parse_flow_dir()
+        print('\t...creating NetCDF file')
+        self.setup_netcdf_dataset()
+        self.parse_spatial_var('is_estuary', save=True)
+        self.vars_spatial.remove('is_estuary')              # Make sure we don't create is_estuary twice
+        print('\t...routing water bodies')
+        self.routing()
+        # Create the variables
+        print("Creating variables...")
+        # Constants - converts the YAML constants file to Fortran namelist format
+        print('\t...constants')
+        self.parse_constants()
+        # Spatial, non-temporal data
+        for var in self.vars_spatial:
+            print(f'\t...{var}')
+            self.parse_spatial_var(var)
+        # Spatial data with 1 record dimension (that isn't time)
+        for var in self.vars_spatial_1d:
+            print(f'\t...{var}')
+            self.parse_spatial_1d_var(var)
+        # Spatial point data
+        for var in self.vars_spatial_point:
+            print(f'\t...{var}')
+            self.parse_spatial_point_var(var)
+        # Spatiotemporal data
+        for var in self.vars_spatiotemporal:
+            print(f'\t...{var}')
+            self.parse_spatiotemporal_var(var)
+        # We're done! Report where the data have been saved to
+        print(f'Done! Data saved to...\n\t'
+              f'{self.config["output"]["nc_file"]}\n\t'
+              f'{self.config["output"]["constants_file"]}')
+
+    def edit(self):
+        """Edit the specified variables in NetCDF file."""
+        # Spatial, non-temporal data
+        print("Editing variables...")
+        for var in self.vars_spatial:
+            print(f'\t...{var}')
+            self.parse_spatial_var(var)
+        # Spatial data with 1 record dimension (that isn't time)
+        for var in self.vars_spatial_1d:
+            print(f'\t...{var}')
+            self.parse_spatial_1d_var(var)
+        # Spatial point data
+        for var in self.vars_spatial_point:
+            print(f'\t...{var}')
+            self.parse_spatial_point_var(var)
+        # Spatiotemporal data
+        for var in self.vars_spatiotemporal:
+            print(f'\t...{var}')
+            self.parse_spatiotemporal_var(var)
+        # We're done! Report where the data have been saved to
+        print(f'Done! Data saved to {self.config["output_nc_file"]}')
 
     def parse_paths(self):
         """Search for <root_dir> in config variable configs and replace with root_dir as
@@ -174,7 +279,10 @@ class Compiler:
                 else:
                     print("Cannot find extra dimension {0} for NetCDF variable {1} in config file.".format(dim[0], var_name))
         vartype = var_dict['vartype'] if 'vartype' in var_dict else 'f4'
-        nc_var = self.nc.createVariable(var_name, vartype, dims, fill_value=fill_value)
+        if var_name not in self.nc.variables:
+            nc_var = self.nc.createVariable(var_name, vartype, dims, fill_value=fill_value)
+        else:
+            nc_var = self.nc[var_name]
         if 'standard_name' in var_dict:
             nc_var.standard_name = var_dict['standard_name']
         if 'long_name' in var_dict:
@@ -187,7 +295,10 @@ class Compiler:
         nc_var.grid_mapping = 'crs'
         # Should we be adding a coordinate sidebar variable (e.g. for point sources)?
         if coords_sidecar:
-            nc_var_coords = self.nc.createVariable("{0}_coords".format(var_name), np.float32, ('d', 'p', 'y', 'x'))
+            if f'{var_name}_coords' not in self.nc.variables:
+                nc_var_coords = self.nc.createVariable(f'{var_name}_coords', np.float32, ('d', 'p', 'y', 'x'))
+            else:
+                nc_var_coords = self.nc[f'{var_name}_coords']
             nc_var_coords.long_name = 'Exact coordinates for values in {0}'.format(var_name)
             nc_var.units = 'm'
             nc_var.grid_mapping = 'crs'
@@ -274,12 +385,12 @@ class Compiler:
             # Parse the Shapefile
             values, coords = self.parse_shapefile(var_name, (from_units, to_units))
             nc_var, nc_var_coords = self.setup_netcdf_var(var_name, coords_sidecar=True)
-            nc_var[:,:,:,:] = values.magnitude
-            nc_var_coords[:,:,:,:] = coords
+            nc_var[:, :, :, :] = values.magnitude
+            nc_var_coords[:, :, :, :] = coords
         # TODO what to do about temporal point sources?
         elif var_dict['type'] == 'csv':
             # TODO
-            print("Sorry, only raster spatial variables supported at the moment. Variable: {0}.".format(var_name))
+            print("Sorry, only shapefile point variables supported at the moment. Variable: {0}.".format(var_name))
         else: 
             print("Unrecognised file type {0} for variable {1}. Type should be raster, csv or nc.".format(var_dict['type'], var_name))
 
@@ -384,8 +495,8 @@ class Compiler:
             )
         gdf = gpd.read_file(self.vars[var_name]['path'])
         # Create empty values array and set a maximum of 100 point sources
-        values = np.ma.array(np.ma.empty((10, int(self.config['time']['n']), *self.flow_dir.shape), dtype=np.float64), mask=True)
-        coords = np.ma.array(np.ma.empty((2, 10, *self.flow_dir.shape), dtype=np.float32), mask=True)
+        values = np.ma.array(np.ma.empty((10, int(self.config['time']['n']), *self.grid.shape), dtype=np.float64), mask=True)
+        coords = np.ma.array(np.ma.empty((2, 10, *self.grid.shape), dtype=np.float32), mask=True)
         # Loop through GeoDataFrame and fill values array
         for index, point in gdf.iterrows():
             if self.in_model_domain(point['geometry']):
@@ -426,7 +537,6 @@ class Compiler:
     def parse_land_use(self, cat_dim):
         """Convert the supplied raster of land use categories to a multi-band array of NanoFASE land
         use categories."""
-        var_dict = self.vars['land_use']
         cat_conv_dict = self.vars['land_use']['cat_conv_dict']
         nf_cats = self.vars['land_use']['cats']
 

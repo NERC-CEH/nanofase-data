@@ -1,11 +1,59 @@
 # NanoFASE Data
 
-The NanoFASE Data module is a set of scripts to compile input data for the [NanoFASE model](https://github.com/nerc-ceh/nanofase).
+The NanoFASE Data module is a set of scripts to compile and edit input data for the [NanoFASE model](https://github.com/nerc-ceh/nanofase).
+
+*Still in development. Use with caution!*
+
+## Getting started
+
+The easiest get started is to create a Conda environment using the provided [environment.yaml](./environment.yaml) file:
+
+```shell script
+$ conda env create -f environment.yaml
+$ activate nanofase-data
+```
 
 ## Usage
 
-Simply call the `compile.py` script and pass a config file to it. An example config file is given: [`config.yaml.example`](config.example.yaml).
+```
+usage: nanofase_data.py [-h] {create,edit} config_file
+
+Compile or edit data for the NanoFASE model.
+
+positional arguments:
+  {create,edit}  do you wish to create from scratch or edit the data?
+  config_file    path to the config file
+
+optional arguments:
+  -h, --help     show this help message and exit
+```
+
+### Creating a new dataset
+
+Specifying the "create" option compiles a new NetCDF dataset and Fortran namelist constant file:
 
 ```shell script
-python compile.py /path/to/config.yaml
+$ python nanofase_data.py create /path/to/config.create.yaml
 ```
+
+An annotated example config file is given: [`config.create.example.yaml`](config.create.example.yaml). The file is quite self-explanatory, but a few further explanations are provided in [this document](docs/config.md).
+
+The two files will be output to the paths specified in the config file.
+
+### Editing an existing dataset
+
+To edit an existing NetCDF dataset, specify the "edit" option:
+
+```shell script
+$ python nanofase_data.py edit /path/to/config.edit.yaml
+```
+
+An annotated example config file is given: [`config.edit.example.yaml`](config.edit.example.yaml). This is similar (but not identical) in format to the creation config file, except only those variables you with to edit should be specified (all other variables are left as-is). Documentation for the config file is [provided here](docs/config.md).
+
+Certain variables can't be edited: `flow_dir`, `is_estuary`. Create a new dataset instead if you wish to change these variables.
+
+The Fortran namelist file cannot be editing using this method and you should instead edit the file directly.
+
+### Tips
+- Support for different file types is a bit sporadic at the moment. I suggest sticking the raster files for spatial variables, raster or CSV files for spatiotemporal variables (with 1 file per timestep for raster files) and shapefiles for point sources. You will trigger errors if you use an unsupported file.
+- Example input data files are given in data.example/thames_tio2_2015/. Running the model using the example config files uses these data. 

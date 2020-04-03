@@ -2,6 +2,8 @@ import numpy as np
 
 
 class Router:
+    """The Router class is responsible for using the flow direction raster to route water bodies within the
+    model domain, setting variables required by the NanoFASE model, such as inflows, outflows and headwaters."""
 
     def __init__(self, flow_dir):
         """Initiliase the routing class with the flow direction array."""
