@@ -6,7 +6,7 @@ The NanoFASE Data module is a set of scripts to compile and edit input data for 
 
 ## Getting started
 
-The easiest get started is to create a Conda environment using the provided [environment.yaml](./environment.yaml) file:
+The easiest way to get started is to create a Conda environment using the provided [environment.yaml](./environment.yaml) file:
 
 ```shell script
 $ conda env create -f environment.yaml
@@ -52,8 +52,9 @@ An annotated example config file is given: [`config.edit.example.yaml`](config.e
 
 Certain variables can't be edited: `flow_dir`, `is_estuary`. Create a new dataset instead if you wish to change these variables.
 
-The Fortran namelist file cannot be editing using this method and you should instead edit the file directly.
+The Fortran namelist file cannot be edited using this method and you should instead edit the file directly.
 
 ### Tips
+- For the moment, all rasters must be the same CRS as the `flow_dir` raster, and this must be a projected raster. We recommend ESPG:27700 (British National Grid). In addition, all rasters except for `land_use` must be the same resolution as `flow_dir`. They can cover a large geographical region and the module will automatically clip them to the correct size.
 - Support for different file types is a bit sporadic at the moment. I suggest sticking the raster files for spatial variables, raster or CSV files for spatiotemporal variables (with 1 file per timestep for raster files) and shapefiles for point sources. You will trigger errors if you use an unsupported file.
-- Example input data files are given in data.example/thames_tio2_2015/. Running the model using the example config files uses these data. 
+- Example input data files are given in `data.example/thames_tio2_2015/`. Running the model using the example config files uses these data. 

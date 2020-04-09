@@ -4,7 +4,7 @@ output:
   nc_file: ./data.nc                                  # Where do you want the output NetCDF file to be stored?
   constants_file: ./constants.nml                     # Where do you want the output constants file to be stored?
 constants_file: ./data.example/thames_tio2_2015/constants.yaml    # Where is the input constants file?
-land_use_file: ./data.example/thames_tio2_2015/land_use.yaml      # Where is the input land use file?
+land_use_config: ./data.example/thames_tio2_2015/land_use.yaml    # Where is the input land use config file?
 root_dir: ./data.example/thames_tio2_2015/            # Root dir, can be used in path variables below as <root_dir>
 iso3: GBR                                             # iso3 code for country modelled
 time:

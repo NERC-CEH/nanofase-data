@@ -26,7 +26,7 @@ class Compiler:
             self.config = self.yaml.load(config_file)
             self.vars = self.yaml.load(model_vars_file)
         # Get the land use file path from the config file. Use default land use if not present
-        land_use_file = self.config['land_use_file'] if 'land_use_file' in self.config \
+        land_use_file = self.config['land_use_config'] if 'land_use_config' in self.config \
             else os.path.join(sys.path[0], 'land_use.default.yaml')
         # Open this YAML file and store in land_use_config dict
         with open(land_use_file, 'r') as land_use_config_file:
@@ -556,7 +556,7 @@ class Compiler:
             for key, conv in cat_conv_dict.items():
                 # CLC "boolean" (1/0) raster for this category
                 src_cat_rs = np.where(src_arr == int(key), float(1), float(0))
-                # Get name of NF cat and fraction of this CLC cat contributing to it - tuple of not?
+                # Get name of NF cat and fraction of this CLC cat contributing to it - tuple if not?
                 for nf_cat in conv:
                     if type(nf_cat) is list:
                         nf_cat_name = nf_cat[0]
@@ -570,7 +570,7 @@ class Compiler:
                     nf_cat_arrs[nf_cat_name].append(src_cat_rs * frac_contr_to_nf_cat)
                         
             # Sum all the contributors to each NF cat
-            nf_final_arrs = { name:np.sum(nf_cat_arr, axis=0) for name, nf_cat_arr in nf_cat_arrs.items() }
+            nf_final_arrs = {name: np.sum(nf_cat_arr, axis=0) for name, nf_cat_arr in nf_cat_arrs.items()}
 
             # Reproject the higher res NF cat to NF model res (defined by grid rs),
             # using the average resampling method to get the fraction cover for each cell.
