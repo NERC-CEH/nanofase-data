@@ -12,3 +12,4 @@ cache/
 
 # IDEs
 .idea
+.vscode/

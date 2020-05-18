@@ -1,5 +1,5 @@
 input_nc_file: ./data.nc                              # Where is the input NetCDF file to edit?
-output_nc_file: ./data.nc                             # Where do you want to put the output NetCDF file? Defaults to same as input_nc_file
+output_nc_file: ./data_edited.nc                      # Where do you want to put the output NetCDF file? Defaults to same as input_nc_file
 root_dir: ./data.example                              # Root dir, can be used in path variables below as <root_dir>
 iso3: GBR                                             # Required if editing point sources
 

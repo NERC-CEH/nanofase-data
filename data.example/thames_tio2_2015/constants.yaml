@@ -11,6 +11,11 @@ soil:
   default_porosity: 0.456
   hamaker_constant: 6.9e-21           # ref: Meesters 2016
   particle_density: 2.5e3
+  # Erosivity parameters. See Davison et al (2005), eq 6, for details. Parameters below are for the UK.
+  erosivity_a1: 6.608
+  erosivity_a2: 0.5
+  erosivity_a3: 2.7
+  erosivity_b: 1.204
 water:
   resuspension_alpha: 0.0005
   resuspension_alpha_estuary: 0.01
@@ -19,12 +24,19 @@ water:
   k_diss_pristine: 0
   k_diss_transformed: 0
   k_transform_pristine: 0
+  estuary_meandering_factor: 1.17     # Used to calculate distance to estuary mouth. 1.17 is calibrated parameter for Thames
   estuary_tidal_M2: 2.25
   estuary_tidal_S2: 0.62
+  estuary_mouth_coords: [601071, 182173]  # Coordinates of the estuary mouth
   estuary_mean_depth_expA: 19.4
   estuary_mean_depth_expB: 1.46e-5
   estuary_width_expA: 12548
   estuary_width_expB: 5.25e-5
+sediment:
+  capacity: [0.01, 0.01, 0.01, 0.01]            # Capacity of each bed sediment layer, in m3/m2
+  initial_mass: [0.2, 0.2, 0.2, 0.2, 0.2]       # Initial mass of each sediment size class in the layer, in kg/m2
+  porosity: [0.8, 0.6, 0.4, 0.2]                # Porosity of each sediment layer
+  fractional_composition: [0.3, 0.3, 0.3, 0.1]  # Distribution of sediment amongst fractional composition bins (same for each size class)
 earthworm_densities:
   heathland: 20
   grassland: 250
