@@ -471,7 +471,7 @@ class Compiler:
                 # Add this time step to the NetCDF file as a masked array
                 nc_var[t-1,:,:] = values.magnitude
         else:
-            print("Unrecognised file type {0} for variable {1}. Type should be raster or csv.".format(config[var]['type'], var))
+            print("Unrecognised file type {0} for variable {1}. Type should be raster or csv.".format(var_dict['type'], var_name))
 
     def parse_shapefile(self, var_name, units):
         """Parse a shapefile of point values into the model grid, with dimensions ['p', 'y', 'x'],
@@ -658,3 +658,25 @@ class Compiler:
             return True
         else:
             return False
+    
+    @staticmethod
+    def create_constants(constants_yaml, output_path):
+        """Method to just create a constants file, bypassing
+        all the NetCDF setup."""
+        yaml = YAML(typ='safe')
+        # If no output_path provided, create in same place and same name as YAML
+        if output_path is None:
+            output_path = f'{os.path.splitext(constants_yaml)[0]}.nml'
+        # Open the YAML constants file and read contents
+        with open(constants_yaml, 'r') as constants_file:
+            constants = yaml.load(constants_file)
+            # Open the NML constants file and write 
+            with open(output_path, 'w') as nml_file:
+                allocatable_array_sizes = {}
+                for grp in constants.values():
+                    for k, v in grp.items():
+                        if isinstance(v, list):
+                            allocatable_array_sizes['n_{0}'.format(k)] = len(v)
+                f90nml.write({'allocatable_array_sizes' : allocatable_array_sizes}, nml_file)
+                f90nml.write(constants, nml_file)
+        print(f'Done! Constants file saved to {output_path}')

@@ -1,42 +1,46 @@
-size_classes:
-  nm_size_classes: [10e-9, 30e-9, 100e-9, 300e-9, 1000e-9]
-  default_nm_size_distribution: [50, 30, 10, 7, 3]
-  spm_size_classes: [1e-6, 3e-6, 10e-6, 30e-6, 100e-6]
-  default_spm_size_distribution: [50, 30, 10, 7, 3]
-  default_matrixembedded_distribution_to_spm: [20, 20, 20, 20, 20]
-  spm_particle_densities: [1500, 2600, 2600, 2600]
+# The constants file provides data which is constant in space and time
+nanomaterial:
+  nm_density: 4230                                                # NM density for TiO2 [kg/m3]
+  default_nm_size_distribution: [50, 30, 10, 7, 3]                # Default imposed distribution amongst NM size classes (which are specific in config) [-]
 soil:
-  darcy_velocity: 9.0e-6
-  default_attachment_efficiency: 0.5  # ref: Meesters 2016
-  default_porosity: 0.456
-  hamaker_constant: 6.9e-21           # ref: Meesters 2016
-  particle_density: 2.5e3
+  darcy_velocity: 9.0e-6                                          # Darcy velocity, used for calculating attachment rate. Ref: Meesters et al (2016)
+  default_porosity: 0.456                                         # Soil porosity
+  hamaker_constant: 6.9e-21                                       # Soil Hamaker constant, used for calculating attachment rate. Ref: Meesters et al (2016)
+  particle_density: 2.5e3                                         # Average density of soil particles
   # Erosivity parameters. See Davison et al (2005), eq 6, for details. Parameters below are for the UK.
   erosivity_a1: 6.608
   erosivity_a2: 0.5
   erosivity_a3: 2.7
   erosivity_b: 1.204
 water:
+  river_meandering_factor: 1.0                                    # Meandering factor to account for non-linear rivers
+  # Resuspension parameters should be obtain by calibration against observed suspended sediment data. See Lazar et al (2010).
   resuspension_alpha: 0.0005
   resuspension_alpha_estuary: 0.01
   resuspension_beta: 5e-8
   resuspension_beta_estuary: 0.001
-  k_diss_pristine: 0
-  k_diss_transformed: 0
-  k_transform_pristine: 0
-  estuary_meandering_factor: 1.17     # Used to calculate distance to estuary mouth. 1.17 is calibrated parameter for Thames
-  estuary_tidal_M2: 2.25
-  estuary_tidal_S2: 0.62
-  estuary_mouth_coords: [601071, 182173]  # Coordinates of the estuary mouth
-  estuary_mean_depth_expA: 19.4
-  estuary_mean_depth_expB: 1.46e-5
-  estuary_width_expA: 12548
-  estuary_width_expB: 5.25e-5
+  k_diss_pristine: 0                                              # Dissolution from pristine rate [/s]
+  k_diss_transformed: 0                                           # Dissolution from transformed rate [/s]
+  k_transform_pristine: 0                                         # Transformation from pristine rate [/s]
+  estuary_meandering_factor: 1.17                                 # Used to calculate distance to estuary mouth. 1.17 is calibrated parameter for Thames
+  estuary_tidal_M2: 2.25                                          # Tidal dynamics M2 parameter
+  estuary_tidal_S2: 0.62                                          # Tidal dynamics S2 parameter
+  estuary_mouth_coords: [601071, 182173]                          # Coordinates of the estuary mouth
+  estuary_mean_depth_expA: 19.4                                   # Exponential parameter A to model estuary mean depth: depth = A exp(B * distance to mouth)
+  estuary_mean_depth_expB: 1.46e-5                                # Exponential parameter B to model estuary mean depth: depth = A exp(B * distance to mouth)
+  estuary_width_expA: 12548                                       # Exponential parameter A to model estuary width: width = A exp(B * distance to mouth)
+  estuary_width_expB: 5.25e-5                                     # Exponential parameter B to model estuary width: width = A exp(B * distance to mouth)
+  water_temperature: 10.0                                         # Average water temperature
+  river_attachment_efficiency: 0.01                               # Attachment efficiency for river
+  estuary_attachment_efficiency: 0.01                             # Attachment efficiency for estuary
 sediment:
-  capacity: [0.01, 0.01, 0.01, 0.01]            # Capacity of each bed sediment layer, in m3/m2
-  initial_mass: [0.2, 0.2, 0.2, 0.2, 0.2]       # Initial mass of each sediment size class in the layer, in kg/m2
-  porosity: [0.8, 0.6, 0.4, 0.2]                # Porosity of each sediment layer
-  fractional_composition: [0.3, 0.3, 0.3, 0.1]  # Distribution of sediment amongst fractional composition bins (same for each size class)
+  capacity: [0.01, 0.01, 0.01, 0.01]                              # Capacity of each bed sediment layer [m3/m2]
+  initial_mass: [0.2, 0.2, 0.2, 0.2, 0.2]                         # Initial mass of each sediment size class in the layer [kg/m2]
+  porosity: [0.8, 0.6, 0.4, 0.2]                                  # Porosity of each sediment layer
+  fractional_composition_distribution: [0.3, 0.3, 0.3, 0.1]       # Distribution of sediment amongst fractional composition bins (same for each size class)
+  default_spm_size_distribution: [50, 30, 10, 7, 3]               # Default sediment size class distribution to impose
+  default_matrixembedded_distribution_to_spm: [20, 20, 20, 20, 20] # Default matrix embedded distribution to SPM to impose
+# Earthworm densities for the different land use classes [individuals/m2]
 earthworm_densities:
   heathland: 20
   grassland: 250
@@ -46,5 +50,5 @@ earthworm_densities:
   deciduous: 400
   coniferous: 150
   arable: 30
-  vertical_distribution: [50, 35, 15]
+  vertical_distribution: [50, 35, 15]                             # Vertical distribution of earthworms down the soil layers
   
