@@ -1,6 +1,6 @@
 # Config files
 
-A config file must be provided when running the `nanofase_data.py` script. Examples for creation and editing are given:
+A config file must be provided when running the `nanofase_data.py` script in `create` or `edit` mode. Examples for creation and editing are given:
 - [`config.create.example.yaml`](../config.create.example.yaml)
 - [`config.edit.example.yaml`](../config.edit.example.yaml)
 
@@ -29,7 +29,7 @@ The data module simply converts the YAML constants file provided into a Fortran 
 constants_file: /path/to/constants.yaml
 ```
 
-Note this conversion only happens in *creation* mode and there is no utility to edit the Fortran namelist file via the data module. Instead, if you wish to edit the file, you can just use a text editor to do so.
+Note this conversion only happens in `create` (and `constants`) mode and there is no utility to edit the Fortran namelist file via the data module. Instead, if you wish to edit the file, you can just use a text editor to do so.
 
 ## `<root_dir>`
 
@@ -49,7 +49,7 @@ runoff:
 
 ## Land use
 
-The module maps between common land use classes (e.g. those provided by [CORINE](https://land.copernicus.eu/pan-european/corine-land-cover)) and the simpler, grouped land use classes used within the NanoFASE model by way of a land use config file. If `land_use_file` is not provided in the config file, `land_use.default.yaml` is used instead - we recommend you use the CORINE land cover map, resampled to the correct CRS (e.g. ESPG:27700, British National Grid, in case of the Thames scenario) and stick with this default.
+The module maps between common land use classes (e.g. those provided by [CORINE](https://land.copernicus.eu/pan-european/corine-land-cover)) and the simpler, grouped land use classes used within the NanoFASE model by way of a land use config file. If `land_use_file` is not provided in the config file, `land_use.default.yaml` is used instead - we recommend you use the CORINE land cover map, resampled to the correct CRS (e.g. ESPG:27700, British National Grid, in case of the Thames scenario - example at [data.example/thames_tio2_2015/land_use.tif](../data.example/thames_tio2_2015/land_use.tif)) and stick with this default.
 
 ### Point source emissions and temporal profiles
 
