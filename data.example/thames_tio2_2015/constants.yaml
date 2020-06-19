@@ -7,6 +7,7 @@ soil:
   default_porosity: 0.456                                         # Soil porosity
   hamaker_constant: 6.9e-21                                       # Soil Hamaker constant, used for calculating attachment rate. Ref: Meesters et al (2016)
   particle_density: 2.5e3                                         # Average density of soil particles
+  soil_attachment_efficiency: 0.1                                 # Soil attachment efficiency. Ref: Meesters et al (2016)
   # Erosivity parameters. See Davison et al (2005), eq 6, for details. Parameters below are for the UK.
   erosivity_a1: 6.608
   erosivity_a2: 0.5
@@ -34,7 +35,7 @@ water:
   river_attachment_efficiency: 0.01                               # Attachment efficiency for river
   estuary_attachment_efficiency: 0.01                             # Attachment efficiency for estuary
 sediment:
-  capacity: [0.01, 0.01, 0.01, 0.01]                              # Capacity of each bed sediment layer [m3/m2]
+  capacity: [0.01, 0.01, 0.01, 0.01]                              # Depth (capacity per m2) of each sediment layer [m]
   initial_mass: [0.2, 0.2, 0.2, 0.2, 0.2]                         # Initial mass of each sediment size class in the layer [kg/m2]
   porosity: [0.8, 0.6, 0.4, 0.2]                                  # Porosity of each sediment layer
   fractional_composition_distribution: [0.3, 0.3, 0.3, 0.1]       # Distribution of sediment amongst fractional composition bins (same for each size class)
