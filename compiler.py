@@ -433,7 +433,7 @@ class Compiler:
             # If the {t} tag is in the path, there must be one raster file per timestep
             if '{t}' in var_dict['path']:
                 # Zero-indexed or higher?
-                t_min = 0 if 't_min' not in var_dict else int(var_dict['t_min'])
+                t_min = 0 if ('t_min' not in var_dict) or (var_dict['t_min'] is None) else int(var_dict['t_min'])
                 # Loop through the time steps and parse raster for each
                 for t in range(t_min, int(self.config['time']['n']) + t_min):
                     path = var_dict['path'].replace('{t}', str(t))

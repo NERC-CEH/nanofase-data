@@ -4,6 +4,8 @@ vendor/__pycache__/
 
 # Config, data and cache
 config/
+config.create.yaml
+config.edit.yaml
 config.yaml
 data/
 data.nc
