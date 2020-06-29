@@ -11,6 +11,7 @@ data/
 data.nc
 constants.nml
 cache/
+scratch/
 
 # IDEs
 .idea

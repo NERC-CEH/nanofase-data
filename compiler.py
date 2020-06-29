@@ -324,9 +324,26 @@ class Compiler:
             path = var_dict['path']
         # Open the raster and clip to extent of grid (defined by flowdir raster)
         with rasterio.open(path) as rs:
-            out_img, out_transform = mask(rs, [self.grid_bbox], crop=True, filled=False)
-        values = np.ma.masked_where(self.grid_mask, out_img[0])
-        # Should the array be clipped?
+            out_bounds = rs.bounds
+            # Mask clips the raster to the grid bounding box or smaller
+            out_img, _ = mask(rs, [self.grid_bbox], crop=True, filled=False)
+        # The raster might still be smaller than the grid box, so let's check and 
+        # construct mask array of the correct size if so
+        if out_bounds.left > self.grid.bounds.left or out_bounds.right < self.grid.bounds.right \
+            or out_bounds.top < self.grid.bounds.top or out_bounds.bottom > self.grid.bounds.bottom:
+            # Get the xy pixel within the grid box of the input raster bounds
+            out_ij_within_grid = rasterio.transform.rowcol(self.grid.transform, out_bounds.left, out_bounds.bottom)
+            # Create an array of grid shape and set all pixels to zero 
+            out_arr = np.zeros(self.grid.shape)
+            # Overwrite the relevant pixels from out_img
+            out_arr[out_ij_within_grid[0]:out_ij_within_grid[0] + out_img[0].shape[0],
+                     out_ij_within_grid[1]:out_ij_within_grid[1] + out_img[0].shape[1]] = out_img[0]
+            # Set any values equal to 0 to mask
+            values = np.ma.masked_where(out_arr == 0, out_arr)
+        else:
+            # If the raster has the correct bounding box, we can just mask it using the grid mask
+            values = np.ma.masked_where(self.grid_mask, out_img[0])
+        # Should the array be clipped (numerically, not geographically)?
         if 'clip' in var_dict:
             try:
                 min = float(var_dict['clip'][0])
