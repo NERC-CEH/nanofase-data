@@ -333,13 +333,11 @@ class Compiler:
             or out_bounds.top < self.grid.bounds.top or out_bounds.bottom > self.grid.bounds.bottom:
             # Get the xy pixel within the grid box of the input raster bounds
             out_ij_within_grid = rasterio.transform.rowcol(self.grid.transform, out_bounds.left, out_bounds.bottom)
-            # Create an array of grid shape and set all pixels to zero 
-            out_arr = np.zeros(self.grid.shape)
-            # Overwrite the relevant pixels from out_img
-            out_arr[out_ij_within_grid[0]:out_ij_within_grid[0] + out_img[0].shape[0],
+            # Create a completely masked array with the same size as the grid
+            values = np.ma.masked_all(self.grid.shape)
+            # Overwrite the relevant pixels from out_img. Masks will be retained on elements that are already masked
+            values[out_ij_within_grid[0]:out_ij_within_grid[0] + out_img[0].shape[0],
                      out_ij_within_grid[1]:out_ij_within_grid[1] + out_img[0].shape[1]] = out_img[0]
-            # Set any values equal to 0 to mask
-            values = np.ma.masked_where(out_arr == 0, out_arr)
         else:
             # If the raster has the correct bounding box, we can just mask it using the grid mask
             values = np.ma.masked_where(self.grid_mask, out_img[0])
