@@ -35,7 +35,6 @@ water:
   river_attachment_efficiency: 0.01                               # Attachment efficiency for river
   estuary_attachment_efficiency: 0.01                             # Attachment efficiency for estuary
 sediment:
-  capacity: [0.01, 0.01, 0.01, 0.01]                              # Depth (capacity per m2) of each sediment layer [m]
   initial_mass: [0.2, 0.2, 0.2, 0.2, 0.2]                         # Initial mass of each sediment size class in the layer [kg/m2]
   porosity: [0.8, 0.6, 0.4, 0.2]                                  # Porosity of each sediment layer
   fractional_composition_distribution: [0.3, 0.3, 0.3, 0.1]       # Distribution of sediment amongst fractional composition bins (same for each size class)
