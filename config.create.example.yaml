@@ -17,10 +17,18 @@ flow_dir:                                             # Flow direction is respon
   type: raster                                        # Type can be raster or csv (see docs)
   path: <root_dir>flow_dir.tif                        # Path to file, <root_dir> variable can be used from above
   crs: EPSG:27700                                     # Manually specify CRS if it is absent or ill-defined in file
-runoff:                                               # Runoff, usually provided by hydrological model
+dem:                                                  # Digital Elevation Model, which defines the height above sea level
+  type: raster                                        # of each grid cell, in metres
+  units: dm
+  path: <root_dir>dem.grd
+runoff:                                               # Runoff, usually provided by a hydrological model
   type: csv
   path: <root_dir>runoff.csv
   units: mm/day                                       # What units is the file in? These will be converted automatically by Pint: https://pint.readthedocs.io/en/0.10.1/
+quickflow:											  # Quickflow (sometimes called direct runoff, or overland flow) is the portion of runoff that travels overland,
+  type: csv											  # and is usually provided by a hydrological model
+  path: <root_dir>quickflow.csv
+  units: mm/day
 precip:                                               # Precipitation
   type: raster
   path: <root_dir>precip/rainfall_5km_2015-{t}.tif    # If the variable is spatiotemporal, multiple raster files can be indexed by {t}, with one file per timestep
@@ -69,6 +77,14 @@ soil_usle_ls_factor:                                  # USLE topography (slope l
 soil_usle_p_factor:                                   # USLE support practices factor
   type: raster
   path: <root_dir>soil_usle_p_factor.tif
+
+# Water
+# resuspension_alpha:
+#   type: raster
+#   path: <root_dir>resuspension-alpha_constant.tif
+# resuspension_beta:
+#   type: raster
+#   path: <root_dir>resuspension-beta_constant.tif
 
 # Land use
 land_use:

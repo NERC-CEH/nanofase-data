@@ -5,6 +5,17 @@
 # properties will likely break something.
 
 # Meteorological and hydrological
+dem:
+  standard_name: height_above_mean_sea_level
+  to_units: dm
+  dims: ['y', 'x']
+  vartype: int32
+quickflow:
+  standard_name: surface_runoff_flux
+  to_units: m/timestep
+  fill_value: 0
+  clip: [0.0, None]
+  dims: ['t', 'y', 'x']
 runoff:
   standard_name: runoff_flux
   to_units: m/timestep

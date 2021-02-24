@@ -12,6 +12,7 @@ data.nc
 constants.nml
 cache/
 scratch/
+*.sh
 
 # IDEs
 .idea
