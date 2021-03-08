@@ -80,6 +80,40 @@ soil_usle_ls_factor:
   to_units: ''
   dims: ['y', 'x']
 
+# Suspended sediment
+bank_erosion_alpha:
+  long_name: linear calibration parameter controlling the rate of bank erosion
+  to_units: 'kg/m**5'
+  dims: ['y', 'x']
+bank_erosion_beta:
+  long_name: calibration parameter controlling the rate of bank erosion
+  to_units: ''
+  dims: ['y', 'x']
+deposition_alpha:
+  long_name: calibration parameter controlling the rate of sediment deposition
+  to_units: ''
+  dims: ['y', 'x']
+deposition_beta:
+  long_name: calibration parameter controlling the rate of sediment deposition
+  to_units: ''
+  dims: ['y', 'x']
+resuspension_alpha:
+  long_name: shear velocity calibration parameter controlling the rate of sediment resuspension
+  to_units: ''
+  dims: ['y', 'x']
+resuspension_beta:
+  long_name: resuspension calibration parameter controlling the rate of sediment resuspension
+  to_units: 's**2/kg'
+  dims: ['y', 'x']
+sediment_transport_a:
+  long_name: sediment transport capacity scaling factor
+  to_units: 'kg m**-2 km**-2'
+  dims: ['y', 'x']
+sediment_transport_c:
+  long_name: sediment transport capacity non-linear coefficient
+  to_units: ''
+  dims: ['y', 'x']
+
 # Land use
 land_use:
   long_name: land use categorised by NanoFASE model land use categories
