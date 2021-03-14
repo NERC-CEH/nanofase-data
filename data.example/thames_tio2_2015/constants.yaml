@@ -6,7 +6,7 @@ soil:
   darcy_velocity: 9.0e-6                                          # Darcy velocity, used for calculating attachment rate. Ref: Meesters et al (2016)
   default_porosity: 0.456                                         # Soil porosity
   hamaker_constant: 6.9e-21                                       # Soil Hamaker constant, used for calculating attachment rate. Ref: Meesters et al (2016)
-  particle_density: 2.5e3                                         # Average density of soil particles
+  particle_density: 2500.0                                        # Average density of soil particles
   soil_attachment_efficiency: 0.1                                 # Soil attachment efficiency. Ref: Meesters et al (2016)
   # Erosivity parameters. See Davison et al (2005), eq 6, for details. Parameters below are for the UK.
   erosivity_a1: 6.608
@@ -14,12 +14,11 @@ soil:
   erosivity_a3: 2.7
   erosivity_b: 1.204
 water:
-  river_meandering_factor: 1.0                                    # Meandering factor to account for non-linear rivers
   # Resuspension parameters should be obtain by calibration against observed suspended sediment data. See Lazar et al (2010).
-  resuspension_alpha: 0.0005
-  resuspension_alpha_estuary: 0.01
-  resuspension_beta: 5e-8
-  resuspension_beta_estuary: 0.001
+  # resuspension_alpha: 0.0005
+  # resuspension_alpha_estuary: 0.01
+  # resuspension_beta: 5e-8
+  # resuspension_beta_estuary: 0.001
   k_diss_pristine: 0                                              # Dissolution from pristine rate [/s]
   k_diss_transformed: 0                                           # Dissolution from transformed rate [/s]
   k_transform_pristine: 0                                         # Transformation from pristine rate [/s]
@@ -35,11 +34,12 @@ water:
   river_attachment_efficiency: 0.01                               # Attachment efficiency for river
   estuary_attachment_efficiency: 0.01                             # Attachment efficiency for estuary
 sediment:
-  initial_mass: [0.2, 0.2, 0.2, 0.2, 0.2]                         # Initial mass of each sediment size class in the layer [kg/m2]
+  initial_mass: [0.00863, 0.019537, 0.323944, 0.323944, 0.323944] # Initial mass of each sediment size class in the layer [kg/m2]
   porosity: [0.8, 0.6, 0.4, 0.2]                                  # Porosity of each sediment layer
   fractional_composition_distribution: [0.3, 0.3, 0.3, 0.1]       # Distribution of sediment amongst fractional composition bins (same for each size class)
   default_spm_size_distribution: [50, 30, 10, 7, 3]               # Default sediment size class distribution to impose
   default_matrixembedded_distribution_to_spm: [20, 20, 20, 20, 20] # Default matrix embedded distribution to SPM to impose
+  spm_density_by_size_class: [1700, 2600, 2600, 1700, 1300]       # Density of SPM in each size class [kg/m3]
 # Earthworm densities for the different land use classes [individuals/m2]
 earthworm_densities:
   heathland: 20
