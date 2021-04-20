@@ -213,10 +213,12 @@ class Compiler:
         self.nc = Dataset(self.config['output']['nc_file'], 'w', format='NETCDF4')
         self.nc.title = "Input data for NanoFASE model"
         self.nc.nanomaterial = self.config['nanomaterial'] if 'nanomaterial' in self.config else 'Unknown'
-        self.nc.Conventions = 'CF-1.6'
+        self.nc.Conventions = 'CF-1.8'
+        self.nc.coordinates = 'crs'                             # Needed for xarray to distinguish crs as a coordinate rather than a variable
         crs_var = self.nc.createVariable('crs', 'i4')
         crs_var.spatial_ref = self.grid_crs.to_wkt()            # QGIS/ArcGIS recognises spatial_ref to define CRS
         crs_var.crs_wkt = self.grid_crs.to_wkt()                # Latest CF conventions say crs_wkt can be used
+		crs_var.epsg_code = self.grid_crs.to_epsg()             # Not standardised, but might be useful instead of having to decipher WKT
         # Time dimensions and coordinate variable
         t_dim = self.nc.createDimension('t', None)
         t = self.nc.createVariable('t', 'i4', ('t',))
