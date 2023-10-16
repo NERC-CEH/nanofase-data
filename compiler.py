@@ -346,11 +346,11 @@ class Compiler:
         # Should the array be clipped (numerically, not geographically)?
         if 'clip' in var_dict:
             try:
-                min = float(var_dict['clip'][0])
+                min = np.array(var_dict['clip'][0]).astype(values.dtype)
             except ValueError:
                 min = None
             try:
-                max = float(var_dict['clip'][1])
+                max = np.array(var_dict['clip'][1]).astype(values.dtype)
             except ValueError:
                 max = None
             np.clip(values, min, max, out=values)
