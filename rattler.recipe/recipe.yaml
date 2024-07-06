@@ -1,0 +1,46 @@
+context:
+  version: "0.1.0"
+
+package:
+  name: nfdata
+  version: ${{ version }}
+
+source:
+  # url: https://pypi.io/packages/source/i/ipywidgets/ipywidgets-${{ version }}.tar.gz
+  # sha256: d0b9b41e49bae926a866e613a39b0f0097745d2b9f1f3dd406641b4a57ec42c9
+  path: ..
+
+build:
+  noarch: python 
+  script: pip install -e .
+  python:
+    entry_points:
+      - nfdata = nfdata.console:run
+
+requirements:
+  # note that there is no build section
+  host:
+    - python >=3.10,<4.0
+    - pip
+    - poetry
+  run:
+    - python >=3.10,<4.0
+    - pint >=0.24.1,<0.25.0
+    - f90nml >=1.4.4,<2.0.0
+    - geopandas >=1.0.0,<2.0.0
+    - netCDF4 >=1.7.1,<2.0.0
+    - numpy >=2.0.0,<3.0.0
+    - pandas >=2.2.2,<3.0.0
+    - rasterio >=1.3.10,<2.0.0
+    - ruamel.yaml >=0.18.6,<0.19.0
+    - shapely >=2.0.4,<3.0.0
+
+tests:
+  - script:
+      - nfdata --help
+
+about:
+  homepage: https://github.com/nerc-ceh/nanofase-data
+  license: BSD-3-Clause
+  license_file: LICENSE.md
+  summary: Compile and edit input data for the NanoFASE model

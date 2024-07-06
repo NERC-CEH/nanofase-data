@@ -1,6 +1,7 @@
 import shutil
 import sys
 import os
+import importlib.resources as pkg_resources
 from netCDF4 import Dataset
 import numpy as np
 import pandas as pd
@@ -13,7 +14,7 @@ from shapely.geometry import box
 from ruamel.yaml import YAML
 from pint import UnitRegistry
 import f90nml
-from router import Router
+from .router import Router
 
 
 class Compiler:
@@ -27,7 +28,7 @@ class Compiler:
             self.vars = self.yaml.load(model_vars_file)
         # Get the land use file path from the config file. Use default land use if not present
         land_use_file = self.config['land_use_config'] if 'land_use_config' in self.config \
-            else os.path.join(sys.path[0], 'land_use.default.yaml')
+            else pkg_resources.files(__package__).joinpath('land_use.default.yaml')
         # Open this YAML file and store in land_use_config dict
         with open(land_use_file, 'r') as land_use_config_file:
             self.land_use_config = self.yaml.load(land_use_config_file)

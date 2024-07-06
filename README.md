@@ -2,23 +2,20 @@
 
 The NanoFASE Data module is a set of scripts to compile and edit input data for the [NanoFASE model](https://github.com/nerc-ceh/nanofase).
 
-*Still in development. Use with caution!*
+[See the NanoFASE documentation for full documentation](https://nerc-ceh.github.io/nanofase/users/nanofase-data.html).
 
 ## Getting started
 
-The easiest way to get started is to create a Conda environment using the provided [environment.yaml](./environment.yaml) file:
+The easiest way to use the library is to [install it from PyPI](https://pypi.org/project/nfdata/). For example, using pip:
 
-```shell script
-$ conda env create -f environment.yaml
-$ activate nanofase-data
+```bash
+$ pip install nfdata
 ```
-
-If you don't want to use Conda, then this [environment.yaml](./environment.yaml) file lists the packages that need to be installed.
 
 ## Usage
 
 ```
-usage: nanofase_data.py [-h] [--output OUTPUT] {create,edit,constants} file
+usage: nfdata [-h] [--output OUTPUT] {create,edit,constants} file
 
 Compile or edit data for the NanoFASE model.
 
@@ -41,7 +38,7 @@ optional arguments:
 Specifying the "create" option compiles a new NetCDF dataset and Fortran namelist constant file:
 
 ```shell script
-$ python nanofase_data.py create /path/to/config.create.yaml
+$ nfdata create /path/to/config.create.yaml
 ```
 
 An annotated example config file is given: [`config.create.example.yaml`](config.create.example.yaml). The file is quite self-explanatory, but a few further explanations are provided in [this document](docs/config.md).
@@ -53,10 +50,10 @@ The two files will be output to the paths specified in the config file.
 To edit an existing NetCDF dataset, specify the "edit" option:
 
 ```shell script
-$ python nanofase_data.py edit /path/to/config.edit.yaml
+$ nfdata edit /path/to/config.edit.yaml
 ```
 
-An annotated example config file is given: [`config.edit.example.yaml`](config.edit.example.yaml). This is similar (but not identical) in format to the creation config file, except only those variables you with to edit should be specified (all other variables are left as-is). Documentation for the config file is [provided here](docs/config.md).
+An annotated example config file is given: [`config.edit.example.yaml`](config.edit.example.yaml). This is similar (but not identical) in format to the creation config file, except only those variables you with to edit should be specified (all other variables are left as-is).
 
 Certain variables can't be edited: `flow_dir`, `is_estuary`. Create a new dataset instead if you wish to change these variables.
 
@@ -67,7 +64,7 @@ The Fortran namelist file cannot be edited using this method and you should inst
 To simply convert a constants YAML file to a Fortran namelist file, you can use the `constants` option:
 
 ```shell script
-$ python nanofase_data.py constants /path/to/constants.yaml -o /path/to/constants.nml
+$ nfdata constants /path/to/constants.yaml -o /path/to/constants.nml
 ```
 
 No config file is required. The location of the newly created constants file is given by the `-o` or `--output` argument.

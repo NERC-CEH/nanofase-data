@@ -1,0 +1,51 @@
+{% set name = "nfdata" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/nfdata-{{ version }}.tar.gz
+  # sha256: e1b8ee0c208dd8f32327bc074c0e7f46eacdd57ad6fd37a429ddfec92b3955d7
+  path: ..
+
+build:
+  noarch: python
+  entry_points:
+    - nfdata = nfdata.console:run
+  script: {{ PYTHON }} -m pip install . -vv
+  number: 0
+
+requirements:
+  host:
+    - python >=3.10,<4.0
+    - pip
+    - poetry
+  run:
+    - python >=3.10,<4.0
+    - pint >=0.24.1,<0.25.0
+    - f90nml >=1.4.4,<2.0.0
+    - geopandas >=1.0.0,<2.0.0
+    - netCDF4 >=1.7.1,<2.0.0
+    - numpy >=2.0.0,<3.0.0
+    - pandas >=2.2.2,<3.0.0
+    - rasterio >=1.3.10,<2.0.0
+    - ruamel.yaml >=0.18.6,<0.19.0
+    - shapely >=2.0.4,<3.0.0
+
+test:
+  commands:
+    - pip check
+    - nfdata --help
+  requires:
+    - pip
+
+about:
+  home: None
+  summary: Compile and edit input data for the NanoFASE model
+  license: BSD-3-Clause
+
+extra:
+  recipe-maintainers:
+    - samharrison7

@@ -1,6 +1,7 @@
-# Byte-compiled
+# Byte-compiled, dists
 __pycache__/
 vendor/__pycache__/
+dist/
 
 # Config, data and cache
 config/
@@ -10,9 +11,7 @@ config.yaml
 data/
 data.nc
 constants.nml
-cache/
 scratch/
-*.sh
 
 # IDEs
 .idea
