@@ -12,7 +12,7 @@ source:
 
 build:
   noarch: python 
-  script: pip install -e .
+  script: pip install .
   python:
     entry_points:
       - nfdata = nfdata.console:run
@@ -42,5 +42,5 @@ tests:
 about:
   homepage: https://github.com/nerc-ceh/nanofase-data
   license: BSD-3-Clause
-  license_file: LICENSE.md
+  license_file: LICENSE
   summary: Compile and edit input data for the NanoFASE model

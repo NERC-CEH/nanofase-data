@@ -6,10 +6,33 @@ The NanoFASE Data module is a set of scripts to compile and edit input data for 
 
 ## Getting started
 
-The easiest way to use the library is to [install it from PyPI](https://pypi.org/project/nfdata/). For example, using pip:
+The package is available on [PyPI](https://pypi.org/project/nfdata/) or [Conda](https://anaconda.org/samharrison7/nfdata), and the easiest way to use the package is to install one of these using Pixi, Conda/Mamba or Pip.
 
-```bash
+Conda:
+
+```console
+$ conda install -c samharrison7 nfdata
+```
+
+Mamba:
+```console
+$ mamba install -c samharrison7 nfdata
+```
+
+Pip:
+```console
 $ pip install nfdata
+```
+
+Pixi (global):
+```console
+$ pixi global install -c samharrison7 nfdata
+```
+
+Pixi (project):
+```console
+$ pixi project channel add samharrison7
+$ pixi add nfdata
 ```
 
 ## Usage
@@ -37,7 +60,7 @@ optional arguments:
 
 Specifying the "create" option compiles a new NetCDF dataset and Fortran namelist constant file:
 
-```shell script
+```console
 $ nfdata create /path/to/config.create.yaml
 ```
 
@@ -49,7 +72,7 @@ The two files will be output to the paths specified in the config file.
 
 To edit an existing NetCDF dataset, specify the "edit" option:
 
-```shell script
+```console
 $ nfdata edit /path/to/config.edit.yaml
 ```
 
@@ -63,7 +86,7 @@ The Fortran namelist file cannot be edited using this method and you should inst
 
 To simply convert a constants YAML file to a Fortran namelist file, you can use the `constants` option:
 
-```shell script
+```console
 $ nfdata constants /path/to/constants.yaml -o /path/to/constants.nml
 ```
 
