@@ -26,7 +26,9 @@ water:
   estuary_mean_depth_expB: 1.46e-5                                # Exponential parameter B to model estuary mean depth: depth = A exp(B * distance to mouth)
   estuary_width_expA: 12548                                       # Exponential parameter A to model estuary width: width = A exp(B * distance to mouth)
   estuary_width_expB: 5.25e-5                                     # Exponential parameter B to model estuary width: width = A exp(B * distance to mouth)
-  water_temperature: 10.0                                         # Average water temperature
+  min_water_temperature: 4.0                                      # Average minimum yearly water temperature
+  max_water_temperature: 21.0                                     # Average maximum yearly water temperature
+  min_water_temperature_day_of_year: 32                           # Day of the year on which the average minimum water temperature occurs
   river_attachment_efficiency: 0.01                               # Attachment efficiency for river
   estuary_attachment_efficiency: 0.01                             # Attachment efficiency for estuary
 sediment:
