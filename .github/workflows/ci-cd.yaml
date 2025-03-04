@@ -21,7 +21,7 @@ jobs:
     # Only run this job if `ci` passes
     needs: build
 
-#     # Only run if a new tag is pushed
+##     # Only run if a new tag is pushed
 #     if: startsWith(github.ref, 'refs/tags/')
 
     environment:
