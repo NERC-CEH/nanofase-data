@@ -3,74 +3,92 @@ name: ci-cd
 on: [push, pull_request]
 
 jobs:
-  build:
-    name: Build package
+  build-conda:
+    name: Build Conda package
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Build conda package
+    - name: Build Conda package
       uses: prefix-dev/rattler-build-action@v0.2.31
       with:
         recipe-path: rattler.recipe/recipe.yaml
         upload-artifact: true
         artifact-name: nfdata
 
-  deploy:
-    name: Deploy package
+  build-py:
+    name: Build Python dist
     runs-on: ubuntu-latest
-    # Only run this job if `ci` passes
-    needs: build
-
-#     # Only run if a new tag is pushed
-#     if: startsWith(github.ref, 'refs/tags/')
-
-    environment:
-      name: pypi
-      url: https://pypi.org/p/nfdata
-
-    # Required for trusted publishing and GitHub release
-    permissions:
-      contents: write
-      id-token: write
-
     steps:
-    - name: Download all the dists
-      uses: actions/download-artifact@v4
+    - name: Install Python
+      uses: actions/setup-python@v5
       with:
-        name: nfdata
-        path: dist/
-    # Publish to TestPyPI first
-    - name: Publish distribution to TestPyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        attestations: false
-    # If that succeeds, publish to real PyPI
-    - name: Publish distribution to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-    # Sign the distribution so that we can create a release
-    - name: Sign the dists with Sigstore
-      uses: sigstore/gh-action-sigstore-python@v3.0.0
-      with:
-        inputs: >-
-          ./dist/*.tar.gz
-          ./dist/*.whl
-    # Create the release
-    - name: Create GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      run: >-
-        gh release create
-        "$GITHUB_REF_NAME"
-        --repo "$GITHUB_REPOSITORY"
-        --notes ""
-    - name: Upload artifact signatures to GitHub Release
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      # Upload to GitHub Release using the `gh` CLI.
-      # `dist/` contains the built packages, and the
-      # sigstore-produced signatures and certificates.
-      run: >-
-        gh release upload
-        "$GITHUB_REF_NAME" dist/**
-        --repo "$GITHUB_REPOSITORY"
+        python-version: 3.14
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Build the Python dist
+      run: python -m build
+
+   # build Conda, upload artifact
+   # build Python, upload artifact
+   # deploy Conda using artifact
+   # deploy PyPI using aritfact 
+
+#   deploy:
+#     name: Deploy package
+#     runs-on: ubuntu-latest
+#     # Only run this job if `ci` passes
+#     needs: build
+
+# #     # Only run if a new tag is pushed
+# #     if: startsWith(github.ref, 'refs/tags/')
+
+#     environment:
+#       name: pypi
+#       url: https://pypi.org/p/nfdata
+
+#     # Required for trusted publishing and GitHub release
+#     permissions:
+#       contents: write
+#       id-token: write
+
+#     steps:
+#     - name: Download all the dists
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: nfdata
+#         path: dist/
+#     # Publish to TestPyPI first
+#     - name: Publish distribution to TestPyPI
+#       uses: pypa/gh-action-pypi-publish@release/v1
+#       with:
+#         repository-url: https://test.pypi.org/legacy/
+#         attestations: false
+#     # If that succeeds, publish to real PyPI
+#     - name: Publish distribution to PyPI
+#       uses: pypa/gh-action-pypi-publish@release/v1
+#     # Sign the distribution so that we can create a release
+#     - name: Sign the dists with Sigstore
+#       uses: sigstore/gh-action-sigstore-python@v3.0.0
+#       with:
+#         inputs: >-
+#           ./dist/*.tar.gz
+#           ./dist/*.whl
+#     # Create the release
+#     - name: Create GitHub Release
+#       env:
+#         GITHUB_TOKEN: ${{ github.token }}
+#       run: >-
+#         gh release create
+#         "$GITHUB_REF_NAME"
+#         --repo "$GITHUB_REPOSITORY"
+#         --notes ""
+#     - name: Upload artifact signatures to GitHub Release
+#       env:
+#         GITHUB_TOKEN: ${{ github.token }}
+#       # Upload to GitHub Release using the `gh` CLI.
+#       # `dist/` contains the built packages, and the
+#       # sigstore-produced signatures and certificates.
+#       run: >-
+#         gh release upload
+#         "$GITHUB_REF_NAME" dist/**
+#         --repo "$GITHUB_REPOSITORY"
