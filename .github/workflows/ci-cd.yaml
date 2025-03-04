@@ -59,7 +59,7 @@ jobs:
     - name: Upload to Anaconda 
       env:
         ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_SECRET }}
-      run: anaconda upload --user samharrison7 *.tar.bz2
+      run: anaconda upload --user samharrison7 *.conda
       shell: micromamba-shell {0}
 
   deploy-pypi:
