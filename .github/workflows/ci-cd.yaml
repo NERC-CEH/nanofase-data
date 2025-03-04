@@ -13,6 +13,7 @@ jobs:
       with:
         recipe-path: rattler.recipe/recipe.yaml
         upload-artifact: true
+        artifact-name: nfdata
 
   deploy:
     name: Deploy package
