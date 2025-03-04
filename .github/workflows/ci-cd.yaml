@@ -25,7 +25,7 @@ jobs:
       with:
         python-version: 3.13
     - name: Install twine
-      run: pip install twine
+      run: pip install build twine
     - name: Build the Python dist
       run: python -m build
 
