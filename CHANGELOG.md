@@ -5,6 +5,10 @@ Notable changes to `nfdata` will be documented here. We are using [semantic vers
 ## [Unreleased]
 
 
+## [0.2.1] - 2025-03-05
+
+* No changes, just fixes to CI/CD.
+
 ## [0.2.0] - 2025-03-05
 
 * Implemented CI/CD. Package is now uploaded to PyPI and Anaconda on every release.
@@ -15,6 +19,7 @@ Notable changes to `nfdata` will be documented here. We are using [semantic vers
 * Initial version.
 
 
-[Unreleased]: https://github.com/nerc-ceh/nanofase-data/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/nerc-ceh/nanofase-data/compare/0.2.1...HEAD
+[0.2.1]: https://github.com/nerc-ceh/nanofase-data/releases/tag/0.2.1
 [0.2.0]: https://github.com/nerc-ceh/nanofase-data/releases/tag/0.2.0
 [0.1.0]: https://github.com/nerc-ceh/nanofase-data/releases/tag/0.1.0
