@@ -12,8 +12,11 @@ jobs:
       uses: prefix-dev/rattler-build-action@v0.2.31
       with:
         recipe-path: rattler.recipe/recipe.yaml
-        upload-artifact: true
-        artifact-name: nfdata-conda
+    - name: Upload the package
+      uses: actions/upload-artifact@v4
+      with:
+        name: nfdata-conda
+        path: output/
 
   build-py:
     name: Build Python dist
@@ -49,6 +52,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: nfdata-conda
+        path: dist/
     - uses: mamba-org/setup-micromamba@v2
       with:
         environment-name: deploy
