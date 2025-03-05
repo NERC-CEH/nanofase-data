@@ -59,7 +59,15 @@ jobs:
     - name: Upload to Anaconda 
       env:
         ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_API_SECRET }}
-      run: anaconda upload --user samharrison7 output/*.tar.bz2
+      run: |
+        shopt -s nullglob
+        EXIT_CODE=0
+        for pkg in $(find output -type f \( -name "*.conda" -o -name "*.tar.bz2" \) ); do
+          if ! anaconda upload --user samharrison7 "${pkg}"; then
+            EXIT_CODE=1
+          fi
+        done
+        exit $EXIT_CODE
       shell: micromamba-shell {0}
 
   deploy-pypi:
