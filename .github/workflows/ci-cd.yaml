@@ -52,7 +52,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: nfdata-conda
-        path: dist/
+        path: output/
     - uses: mamba-org/setup-micromamba@v2
       with:
         environment-name: deploy
