@@ -11,16 +11,38 @@ time:
   n: 365                                              # Number of timesteps to run the model for
   dt: 86400                                           # Length of each timestep in seconds
   start_date: 2015-01-01                              # Start date for the model run
+# If the `condition_dem` config option is present, the compiler will attempt to remove
+# pits, depressions and flat areas from the DEM using WhiteboxTools'
+# `breach_depressions_least_cost`.
+condition_dem:
+  # If `save_dem_to_path` is set, the conditioned DEM will be saved to this path
+  # (even if the conditioning hasn't fully worked). If not, a temporary directory
+  # is used and the resulting DEM is deleted after the processing.
+  save_dem_to_path: ./dem.tif
+  # Additional config options specified here will be passed to `breach_depressions_least_cost`
+  # See https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#BreachDepressionsLeastCost
+  # If a value for `callback` is provided, it is ignored as we implement our own callback to
+  # deal with errors. The only required (by Whitebox) parameter is `dist`, which specifies
+  # the maximum search distance for breach paths in cells. The default value used in nfdata is 10000.
+  dist: 10000
 
 # Meteorological and hydrological
-flow_dir:                                             # Flow direction is responsible for defining the grid system
-  type: raster                                        # Type can be raster or csv (see docs)
+# -------------------------------
+# The model requires either a flow direction or DEM raster. If no flow direction
+# is provided, the DEM will be used to calculate flow direction. If both are provided,
+# the flow direction will be used. The DEM must either be conditioned (contain no pits,
+# depressions or flat areas), or if the config option `condition_dem` is set to `True`,
+# the compiler will attempt to condition the DEM using WhiteboxTools'
+# `breach_depressions_least_cost`. This is not guaranteed to work, and therefore users
+# might wish to condition the DEM themselves.
+# `flow_dir` and `dem` must be rasters that are openable by Rasterio.
+flow_dir:
   path: <root_dir>flow_dir.tif                        # Path to file, <root_dir> variable can be used from above
   crs: EPSG:27700                                     # Manually specify CRS if it is absent or ill-defined in file
-dem:                                                  # Digital Elevation Model, which defines the height above sea level
-  type: raster                                        # of each grid cell, in metres
+dem:
+  type: raster
   units: dm
-  path: <root_dir>dem.grd
+  path: <root_dir>dem.tif
 runoff:                                               # Runoff, usually provided by a hydrological model
   type: csv
   path: <root_dir>runoff.csv
@@ -41,7 +63,7 @@ precip:                                               # Precipitation
 # Soil
 # Most soil properties can be obtained from the European Soil Data Center (ESDAC): https://esdac.jrc.ec.europa.eu/
 soil_bulk_density:
-  type: raster
+  type: raster                                        # For spatial variables, only rasters are supported at the moment. Spatiotemporal variables can be CSVs
   units: t/m**3
   path: <root_dir>soil_bulk_density.tif
   # Source example:

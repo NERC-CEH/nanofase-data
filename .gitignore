@@ -11,6 +11,7 @@ config.yaml
 data/
 data.nc
 constants.nml
+dem.tif
 scratch/
 
 # IDEs

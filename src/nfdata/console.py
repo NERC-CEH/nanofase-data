@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-"""NanoFASE data is responsible for compiling and editing data for use in NanoFASE model."""
-import sys
-import os
+"""
+NanoFASE data is responsible for compiling and editing data for use in
+the NanoFASE model.
+"""
 import argparse
 import importlib.resources as pkg_resources
+
 from .compiler import Compiler
 
 
