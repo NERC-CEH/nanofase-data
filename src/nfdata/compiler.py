@@ -658,11 +658,11 @@ class Compiler:
                     else:
                         nf_cat_name = nf_cat
                         frac_contr_to_nf_cat = 1
-                    
+
                     # Add this CLC cat, multiplied by the fraction of it contributing to
                     # the NF cat, to the list of CLC rasters to be combined into this NF cat
                     nf_cat_arrs[nf_cat_name].append(src_cat_rs * frac_contr_to_nf_cat)
-                        
+
             # Sum all the contributors to each NF cat
             nf_final_arrs = {name: np.sum(nf_cat_arr, axis=0) for name, nf_cat_arr in nf_cat_arrs.items()}
 
@@ -673,7 +673,7 @@ class Compiler:
             for name, old_arr in nf_final_arrs.items():
                 if old_arr.shape == src_arr.shape:
                     # Re-read flowdir as reproject fills new_arr
-                    new_arr = self.flow_dir.copy()
+                    new_arr = np.empty(self.grid.shape, dtype=src_arr.dtype)
                     # Reproject. Remember we're not converting CRS here, so clc_rs
                     # CRS can be used as src and dst
                     reproject(
@@ -681,7 +681,7 @@ class Compiler:
                         destination=new_arr,
                         src_transform=rs.transform,
                         dst_transform=self.grid.transform,
-                        src_crs=rs.crs,    
+                        src_crs=rs.crs,
                         dst_crs=rs.crs,
                         resampling=Resampling.average
                     )

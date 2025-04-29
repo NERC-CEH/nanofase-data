@@ -1,6 +1,9 @@
 name: ci-cd
 
-on: [push, pull_request]
+# on: [push, pull_request]
+on:
+  push:
+    branches: ['feature/build']
 
 jobs:
 
@@ -10,6 +13,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    # Make sure there is no output directory
+    - name: Remove File
+      uses: JesseTG/rm@v1.0.3
+      with:
+        path: output/
 
     # Build the Conda package using rattler-build
     - name: Build Conda package
